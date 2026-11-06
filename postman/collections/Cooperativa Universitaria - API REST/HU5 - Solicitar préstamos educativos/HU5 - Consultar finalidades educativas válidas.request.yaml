@@ -1,0 +1,19 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.
+
+  Lista las 9 finalidades (FE001-FE009).
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/fines-educativos"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("9 fines", function () { pm.expect(json.data.cantidad === 9).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU5 - Consultar finalidades educativas válidas.resources/examples
+order: 1000

@@ -1,0 +1,18 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 6:** Como funcionario, quiero calcular el interés del préstamo aplicando una tasa del 5 %, para conocer el valor total que debe pagar el estudiante.
+
+  El préstamo P999 no existe.
+
+  **Código HTTP esperado:** 404
+url: "{{baseUrl}}/api/prestamos/P999/interes"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 404", function () { pm.response.to.have.status(404); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU6 - Calcular interés de préstamo inexistente (error 404).resources/examples
+order: 3000

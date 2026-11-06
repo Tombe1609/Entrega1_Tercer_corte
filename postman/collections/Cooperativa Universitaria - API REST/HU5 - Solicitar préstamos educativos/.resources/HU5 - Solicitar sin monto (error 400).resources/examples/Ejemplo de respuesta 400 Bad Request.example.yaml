@@ -1,0 +1,29 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/prestamos"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "usuario_id": "U010",
+        "fin_id": "FE001"
+      }
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": false,
+        "message": "Los datos enviados no son válidos.",
+        "errors": [
+          "El campo \"monto\" es obligatorio."
+        ]
+      }
+order: 1000

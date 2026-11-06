@@ -1,0 +1,27 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  Ya existe una distribución para 2026-04.
+
+  **Código HTTP esperado:** 409
+url: "{{baseUrl}}/api/distribucion-intereses"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "periodo": "2026-04",
+      "intereses_generados": 500000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 409", function () { pm.response.to.have.status(409); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU9 - Registrar el mismo periodo otra vez (error 409).resources/examples
+order: 3000

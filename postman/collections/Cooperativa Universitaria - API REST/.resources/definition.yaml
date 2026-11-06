@@ -1,0 +1,8 @@
+$kind: collection
+description: Colección de pruebas de las 10 funcionalidades (HU1-HU10). Las peticiones marcadas con ★ son las que se muestran en la sustentación. Ejecutar en orden, sobre una base recién inicializada con `npm run seed`. Si se ejecuta dos veces seguidas, los registros creados la primera vez provocarán 409; reinicie la base como indica el README.
+variables:
+  baseUrl: http://localhost:3000
+  usuario_nuevo: ""
+  funcionario_nuevo: ""
+  ahorro_nuevo: ""
+  prestamo_nuevo: ""

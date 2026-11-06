@@ -1,0 +1,21 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 7:** Como estudiante, quiero consultar mis préstamos y saldos pendientes, para conocer cuánto capital e interés debo.
+
+  Filtro por estado. P004 tiene capital pendiente 3.000.000 e interés 150.000.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/estudiantes/U004/prestamos?estado=activo"
+method: GET
+queryParams:
+  estado: activo
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("capital pendiente 3000000", function () { pm.expect(json.data.total_capital_pendiente === 3000000).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU7 - Consultar solo préstamos activos de U004.resources/examples
+order: 2000

@@ -1,0 +1,27 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  El periodo debe tener el formato AAAA-MM.
+
+  **Código HTTP esperado:** 400
+url: "{{baseUrl}}/api/distribucion-intereses"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "periodo": "abril",
+      "intereses_generados": 500000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 400", function () { pm.response.to.have.status(400); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU9 - Periodo con formato inválido (error 400).resources/examples
+order: 4000

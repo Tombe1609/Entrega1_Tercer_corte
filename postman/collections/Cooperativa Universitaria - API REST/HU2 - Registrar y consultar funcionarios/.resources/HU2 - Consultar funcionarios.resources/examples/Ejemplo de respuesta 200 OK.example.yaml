@@ -1,0 +1,70 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/funcionarios"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Funcionarios consultados correctamente.",
+        "data": {
+          "cantidad": 6,
+          "funcionarios": [
+            {
+              "funcionario_id": "F001",
+              "nombre": "Diana Marcela Rojas",
+              "cargo": "Director financiero",
+              "telefono": "3102001001",
+              "email": "diana.rojas@universidad.edu.co",
+              "estado": "activo"
+            },
+            {
+              "funcionario_id": "F002",
+              "nombre": "Jorge Enrique Martínez",
+              "cargo": "Asesor de créditos",
+              "telefono": "3102001002",
+              "email": "jorge.martinez@universidad.edu.co",
+              "estado": "activo"
+            },
+            {
+              "funcionario_id": "F003",
+              "nombre": "Paola Andrea Castillo",
+              "cargo": "Tesorero",
+              "telefono": "3102001003",
+              "email": "paola.castillo@universidad.edu.co",
+              "estado": "activo"
+            },
+            {
+              "funcionario_id": "F004",
+              "nombre": "Miguel Ángel Ramírez",
+              "cargo": "Auxiliar administrativo",
+              "telefono": "3102001004",
+              "email": "miguel.ramirez@universidad.edu.co",
+              "estado": "activo"
+            },
+            {
+              "funcionario_id": "F005",
+              "nombre": "Camila Andrea Suárez",
+              "cargo": "Analista financiero",
+              "telefono": "3102001005",
+              "email": "camila.suarez@universidad.edu.co",
+              "estado": "activo"
+            },
+            {
+              "funcionario_id": "F006",
+              "nombre": "Natalia Marcela Gómez",
+              "cargo": "Coordinador de cartera",
+              "telefono": "3102001006",
+              "email": "natalia.gomez@universidad.edu.co",
+              "estado": "activo"
+            }
+          ]
+        }
+      }
+order: 1000

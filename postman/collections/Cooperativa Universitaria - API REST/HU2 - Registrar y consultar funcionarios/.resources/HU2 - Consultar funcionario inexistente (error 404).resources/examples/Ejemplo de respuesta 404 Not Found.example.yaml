@@ -1,0 +1,17 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/funcionarios/F999"
+  method: GET
+response:
+  statusCode: 404
+  statusText: Not Found
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": false,
+        "message": "No existe un funcionario con id F999."
+      }
+order: 1000

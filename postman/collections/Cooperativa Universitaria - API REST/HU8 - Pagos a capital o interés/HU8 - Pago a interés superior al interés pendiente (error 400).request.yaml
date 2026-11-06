@@ -1,0 +1,27 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
+
+  El pago supera el interés pendiente.
+
+  **Código HTTP esperado:** 400
+url: "{{baseUrl}}/api/prestamos/P008/pagos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tipo_abono": "interes",
+      "valor": 999999
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 400", function () { pm.response.to.have.status(400); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU8 - Pago a interés superior al interés pendiente (error 400).resources/examples
+order: 4000

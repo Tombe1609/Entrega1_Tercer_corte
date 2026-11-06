@@ -1,0 +1,32 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.
+
+  Crea el funcionario F006 (estado "activo" por defecto).
+
+  **Código HTTP esperado:** 201
+url: "{{baseUrl}}/api/funcionarios"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Natalia Marcela Gómez",
+      "cargo": "Coordinador de cartera",
+      "telefono": "3102001006",
+      "email": "natalia.gomez@universidad.edu.co"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 201", function () { pm.response.to.have.status(201); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("id F006", function () { pm.expect(json.data.funcionario_id === 'F006').to.be.true; });
+      pm.test("estado activo", function () { pm.expect(json.data.estado === 'activo').to.be.true; });
+      pm.collectionVariables.set("funcionario_nuevo", json.data.funcionario_id);
+    language: text/javascript
+examples: ./.resources/★ HU2 - Registrar funcionario (válido).resources/examples
+order: 1000

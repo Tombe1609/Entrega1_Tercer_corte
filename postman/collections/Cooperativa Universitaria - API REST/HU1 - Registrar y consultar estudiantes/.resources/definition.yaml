@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.
+
+  **Funcionalidad:** Registrar y consultar estudiantes.
+order: 2000

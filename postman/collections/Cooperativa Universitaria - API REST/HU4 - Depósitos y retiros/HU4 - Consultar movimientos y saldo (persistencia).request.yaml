@@ -1,0 +1,20 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 4:** Como estudiante, quiero realizar depósitos o retiros, para mantener actualizado mi saldo de ahorro y consultar los movimientos.
+
+  Historial de la cuenta: un depósito y un retiro; el saldo final es 200.000.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/ahorros/{{ahorro_nuevo}}/movimientos"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("2 movimientos", function () { pm.expect(json.data.cantidad === 2).to.be.true; });
+      pm.test("saldo 200000", function () { pm.expect(json.data.cuenta.saldo === 200000).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU4 - Consultar movimientos y saldo (persistencia).resources/examples
+order: 6000

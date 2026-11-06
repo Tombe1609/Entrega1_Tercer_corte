@@ -1,0 +1,18 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  Falta el parámetro intereses_generados.
+
+  **Código HTTP esperado:** 400
+url: "{{baseUrl}}/api/distribucion-intereses/calculo"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 400", function () { pm.response.to.have.status(400); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU9 - Calcular sin indicar los intereses (error 400).resources/examples
+order: 5000

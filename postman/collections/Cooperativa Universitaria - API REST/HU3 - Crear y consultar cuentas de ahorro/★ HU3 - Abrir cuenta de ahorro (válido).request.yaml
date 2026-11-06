@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 3:** Como estudiante, quiero abrir una cuenta de ahorro, para depositar y administrar mi dinero dentro de la cooperativa.
+
+  Crea la cuenta A011 con saldo 0 para el estudiante creado en HU1.
+
+  **Código HTTP esperado:** 201
+url: "{{baseUrl}}/api/ahorros"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "usuario_id": "{{usuario_nuevo}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 201", function () { pm.response.to.have.status(201); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("saldo inicial 0", function () { pm.expect(json.data.saldo === 0).to.be.true; });
+      pm.test("id A011", function () { pm.expect(json.data.ahorro_id === 'A011').to.be.true; });
+      pm.collectionVariables.set("ahorro_nuevo", json.data.ahorro_id);
+    language: text/javascript
+examples: ./.resources/★ HU3 - Abrir cuenta de ahorro (válido).resources/examples
+order: 1000

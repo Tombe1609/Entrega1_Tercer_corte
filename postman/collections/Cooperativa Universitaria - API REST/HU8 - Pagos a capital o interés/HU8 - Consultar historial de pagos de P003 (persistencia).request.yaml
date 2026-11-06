@@ -1,0 +1,20 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
+
+  Historial del préstamo con sus saldos actuales.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/prestamos/P003/pagos"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("1 pago", function () { pm.expect(json.data.cantidad_pagos === 1).to.be.true; });
+      pm.test("capital 2000000", function () { pm.expect(json.data.prestamo.capital_pendiente === 2000000).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU8 - Consultar historial de pagos de P003 (persistencia).resources/examples
+order: 8000

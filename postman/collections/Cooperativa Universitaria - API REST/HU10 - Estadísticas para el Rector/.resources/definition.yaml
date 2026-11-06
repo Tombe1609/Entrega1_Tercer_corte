@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 10:** Como Rector, quiero consultar estadísticas de ahorros, préstamos, pagos e intereses, para supervisar el funcionamiento de la cooperativa.
+
+  **Funcionalidad:** Estadísticas y reportes administrativos.
+order: 11000

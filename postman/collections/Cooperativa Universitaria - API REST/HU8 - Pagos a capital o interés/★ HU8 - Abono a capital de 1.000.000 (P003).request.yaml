@@ -1,0 +1,30 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
+
+  Capital 3.000.000 → 2.000.000. El interés pendiente se recalcula: 2.000.000 × 5 % = 100.000. Se registra el pago PG004.
+
+  **Código HTTP esperado:** 201
+url: "{{baseUrl}}/api/prestamos/P003/pagos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tipo_abono": "capital",
+      "valor": 1000000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 201", function () { pm.response.to.have.status(201); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("capital 2000000", function () { pm.expect(json.data.prestamo.capital_pendiente === 2000000).to.be.true; });
+      pm.test("interés 100000", function () { pm.expect(json.data.prestamo.interes_pendiente === 100000).to.be.true; });
+      pm.test("pago PG004", function () { pm.expect(json.data.pago.pago_id === 'PG004').to.be.true; });
+    language: text/javascript
+examples: ./.resources/★ HU8 - Abono a capital de 1.000.000 (P003).resources/examples
+order: 1000

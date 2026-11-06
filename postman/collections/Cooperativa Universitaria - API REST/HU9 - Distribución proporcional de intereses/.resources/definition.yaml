@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  **Funcionalidad:** Calcular y registrar la distribución proporcional de intereses.
+order: 10000

@@ -1,0 +1,23 @@
+$kind: http-request
+name: HU9 - Consultar distribución guardada del periodo 2026-04 (persistencia)
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  Lee desde MongoDB los registros guardados del periodo.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/distribucion-intereses?periodo=2026-04"
+method: GET
+queryParams:
+  periodo: 2026-04
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("11 registros", function () { pm.expect(json.data.cantidad_registros === 11).to.be.true; });
+      pm.test("suma ~500000", function () { pm.expect(Math.abs(json.data.total_interes_recibido - 500000) < 0.1).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU9 - Consultar distribución guardada del periodo 2026-04 (pers.resources/examples
+order: 6000

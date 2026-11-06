@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 4:** Como estudiante, quiero realizar depósitos o retiros, para mantener actualizado mi saldo de ahorro y consultar los movimientos.
+
+  Aumenta el saldo y registra el movimiento (M014) en `movimientos_ahorro`.
+
+  **Código HTTP esperado:** 201
+url: "{{baseUrl}}/api/ahorros/{{ahorro_nuevo}}/depositos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "valor": 300000,
+      "descripcion": "Depósito realizado por el estudiante"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 201", function () { pm.response.to.have.status(201); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("saldo 300000", function () { pm.expect(json.data.saldo_actual === 300000).to.be.true; });
+      pm.test("movimiento M014", function () { pm.expect(json.data.movimiento.movimiento_id === 'M014').to.be.true; });
+    language: text/javascript
+examples: ./.resources/★ HU4 - Registrar depósito de 300.000.resources/examples
+order: 1000

@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
+
+  **Funcionalidad:** Pagos diferenciados a capital o interés.
+order: 9000

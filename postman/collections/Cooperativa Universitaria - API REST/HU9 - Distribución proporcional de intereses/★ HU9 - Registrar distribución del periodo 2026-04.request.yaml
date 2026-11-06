@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  Guarda un registro por ahorrador en `distribucion_intereses` (DI011...). No modifica los saldos de ahorro.
+
+  **Código HTTP esperado:** 201
+url: "{{baseUrl}}/api/distribucion-intereses"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "periodo": "2026-04",
+      "intereses_generados": 500000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 201", function () { pm.response.to.have.status(201); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("11 registros", function () { pm.expect(json.data.distribucion.length === 11).to.be.true; });
+      pm.test("primer id DI011", function () { pm.expect(json.data.distribucion[0].distribucion_id === 'DI011').to.be.true; });
+    language: text/javascript
+examples: ./.resources/★ HU9 - Registrar distribución del periodo 2026-04.resources/examples
+order: 2000

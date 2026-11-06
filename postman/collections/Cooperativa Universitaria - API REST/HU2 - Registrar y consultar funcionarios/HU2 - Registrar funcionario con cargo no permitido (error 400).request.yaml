@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.
+
+  El cargo "Portero" no está en la lista permitida.
+
+  **Código HTTP esperado:** 400
+url: "{{baseUrl}}/api/funcionarios"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Pedro Pérez",
+      "cargo": "Portero",
+      "telefono": "3102001007",
+      "email": "pedro.perez@universidad.edu.co"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 400", function () { pm.response.to.have.status(400); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU2 - Registrar funcionario con cargo no permitido (error 400).resources/examples
+order: 2000

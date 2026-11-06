@@ -1,0 +1,27 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.
+
+  Faltan documento, teléfono y correo: la API responde 400 con la lista de errores.
+
+  **Código HTTP esperado:** 400
+url: "{{baseUrl}}/api/estudiantes"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Ana"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 400", function () { pm.response.to.have.status(400); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+      pm.test("lista de errores", function () { pm.expect(json.errors.length >= 3).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU1 - Registrar estudiante sin campos obligatorios (error 400).resources/examples
+order: 2000

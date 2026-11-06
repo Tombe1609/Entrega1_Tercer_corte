@@ -1,0 +1,135 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/distribucion-intereses?periodo=2026-03"
+  method: GET
+  queryParams:
+    periodo: 2026-03
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Distribuciones consultadas correctamente.",
+        "data": {
+          "cantidad_registros": 10,
+          "total_interes_recibido": 500000,
+          "distribucion": [
+            {
+              "distribucion_id": "DI001",
+              "periodo": "2026-03",
+              "usuario_id": "U001",
+              "ahorro_id": "A001",
+              "ahorro_base": 2000000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.0740740741,
+              "interes_recibido": 37037.04
+            },
+            {
+              "distribucion_id": "DI002",
+              "periodo": "2026-03",
+              "usuario_id": "U002",
+              "ahorro_id": "A002",
+              "ahorro_base": 3000000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.1111111111,
+              "interes_recibido": 55555.56
+            },
+            {
+              "distribucion_id": "DI003",
+              "periodo": "2026-03",
+              "usuario_id": "U003",
+              "ahorro_id": "A003",
+              "ahorro_base": 5000000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.1851851852,
+              "interes_recibido": 92592.59
+            },
+            {
+              "distribucion_id": "DI004",
+              "periodo": "2026-03",
+              "usuario_id": "U004",
+              "ahorro_id": "A004",
+              "ahorro_base": 1500000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.0555555556,
+              "interes_recibido": 27777.78
+            },
+            {
+              "distribucion_id": "DI005",
+              "periodo": "2026-03",
+              "usuario_id": "U005",
+              "ahorro_id": "A005",
+              "ahorro_base": 2500000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.0925925926,
+              "interes_recibido": 46296.3
+            },
+            {
+              "distribucion_id": "DI006",
+              "periodo": "2026-03",
+              "usuario_id": "U006",
+              "ahorro_id": "A006",
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "ahorro_base": 1000000,
+              "participacion": 0.037037037,
+              "interes_recibido": 18518.52
+            },
+            {
+              "distribucion_id": "DI007",
+              "periodo": "2026-03",
+              "usuario_id": "U007",
+              "ahorro_id": "A007",
+              "ahorro_base": 3500000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.1296296296,
+              "interes_recibido": 64814.81
+            },
+            {
+              "distribucion_id": "DI008",
+              "periodo": "2026-03",
+              "usuario_id": "U008",
+              "ahorro_id": "A008",
+              "ahorro_base": 4500000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.1666666667,
+              "interes_recibido": 83333.33
+            },
+            {
+              "distribucion_id": "DI009",
+              "periodo": "2026-03",
+              "usuario_id": "U009",
+              "ahorro_id": "A009",
+              "ahorro_base": 1800000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.0666666667,
+              "interes_recibido": 33333.33
+            },
+            {
+              "distribucion_id": "DI010",
+              "periodo": "2026-03",
+              "usuario_id": "U010",
+              "ahorro_id": "A010",
+              "ahorro_base": 2200000,
+              "total_ahorrado": 27000000,
+              "intereses_generados": 500000,
+              "participacion": 0.0814814815,
+              "interes_recibido": 40740.74
+            }
+          ]
+        }
+      }
+order: 1000

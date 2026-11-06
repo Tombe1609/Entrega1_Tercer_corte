@@ -1,0 +1,46 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/ahorros/{{ahorro_nuevo}}/movimientos"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Movimientos consultados correctamente.",
+        "data": {
+          "cuenta": {
+            "ahorro_id": "A011",
+            "usuario_id": "U012",
+            "saldo": 200000,
+            "estado": "activo"
+          },
+          "cantidad": 2,
+          "movimientos": [
+            {
+              "movimiento_id": "M014",
+              "ahorro_id": "A011",
+              "usuario_id": "U012",
+              "tipo": "deposito",
+              "valor": 300000,
+              "fecha": "2026-10-13T22:04:37.794Z",
+              "descripcion": "Depósito realizado por el estudiante"
+            },
+            {
+              "movimiento_id": "M015",
+              "ahorro_id": "A011",
+              "usuario_id": "U012",
+              "tipo": "retiro",
+              "valor": 100000,
+              "fecha": "2026-10-13T22:04:37.810Z",
+              "descripcion": "Retiro autorizado"
+            }
+          ]
+        }
+      }
+order: 1000

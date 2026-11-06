@@ -1,0 +1,28 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/estudiantes"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "nombre": "Daniel Esteban Molina",
+        "documento": "1001001012",
+        "telefono": "3001111012",
+        "email": "daniel.molina@universidad.edu.co"
+      }
+response:
+  statusCode: 409
+  statusText: Conflict
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": false,
+        "message": "No se registró: ya existe un usuario con ese documento."
+      }
+order: 1000

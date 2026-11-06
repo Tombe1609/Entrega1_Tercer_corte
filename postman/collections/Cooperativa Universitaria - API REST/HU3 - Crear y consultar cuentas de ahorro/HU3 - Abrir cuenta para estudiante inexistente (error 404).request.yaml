@@ -1,0 +1,26 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 3:** Como estudiante, quiero abrir una cuenta de ahorro, para depositar y administrar mi dinero dentro de la cooperativa.
+
+  El estudiante U999 no existe.
+
+  **Código HTTP esperado:** 404
+url: "{{baseUrl}}/api/ahorros"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "usuario_id": "U999"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 404", function () { pm.response.to.have.status(404); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU3 - Abrir cuenta para estudiante inexistente (error 404).resources/examples
+order: 2000

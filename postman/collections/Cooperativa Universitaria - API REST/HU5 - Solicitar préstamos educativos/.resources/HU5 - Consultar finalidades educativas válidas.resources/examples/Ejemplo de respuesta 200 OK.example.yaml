@@ -1,0 +1,76 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/fines-educativos"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Finalidades educativas consultadas correctamente.",
+        "data": {
+          "cantidad": 9,
+          "fines_educativos": [
+            {
+              "fin_id": "FE001",
+              "nombre": "Pago de matrícula",
+              "descripcion": "Pago de matrícula universitaria",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE002",
+              "nombre": "Pago de semestre",
+              "descripcion": "Pago de semestre académico",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE003",
+              "nombre": "Compra de computador",
+              "descripcion": "Compra de computador para actividades académicas",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE004",
+              "nombre": "Compra de libros",
+              "descripcion": "Compra de libros y textos académicos",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE005",
+              "nombre": "Material académico",
+              "descripcion": "Compra de materiales necesarios para estudiar",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE006",
+              "nombre": "Cursos",
+              "descripcion": "Pago de cursos relacionados con la formación",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE007",
+              "nombre": "Certificaciones",
+              "descripcion": "Pago de certificaciones académicas o profesionales",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE008",
+              "nombre": "Transporte universitario",
+              "descripcion": "Transporte relacionado con actividades universitarias",
+              "estado": "activo"
+            },
+            {
+              "fin_id": "FE009",
+              "nombre": "Otros gastos educativos",
+              "descripcion": "Otros gastos directamente relacionados con la educación",
+              "estado": "activo"
+            }
+          ]
+        }
+      }
+order: 1000

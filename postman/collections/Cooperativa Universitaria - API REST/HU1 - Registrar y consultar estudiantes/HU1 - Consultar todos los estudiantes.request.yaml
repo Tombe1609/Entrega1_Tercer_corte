@@ -1,0 +1,19 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.
+
+  Lista los estudiantes registrados (10 iniciales + el nuevo).
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/estudiantes"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("11 estudiantes", function () { pm.expect(json.data.cantidad === 11).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU1 - Consultar todos los estudiantes.resources/examples
+order: 4000

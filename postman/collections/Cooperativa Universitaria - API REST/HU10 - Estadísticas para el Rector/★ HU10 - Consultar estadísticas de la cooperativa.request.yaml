@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 10:** Como Rector, quiero consultar estadísticas de ahorros, préstamos, pagos e intereses, para supervisar el funcionamiento de la cooperativa.
+
+  Reporte administrativo: estudiantes, ahorros, préstamos, pagos, intereses distribuidos y rankings. Solo consulta.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/reportes/estadisticas"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("11 estudiantes", function () { pm.expect(json.data.estudiantes.cantidad === 11).to.be.true; });
+      pm.test("9 préstamos", function () { pm.expect(json.data.prestamos.cantidad === 9).to.be.true; });
+      pm.test("total prestado 17.800.000", function () { pm.expect(json.data.prestamos.total_prestado === 17800000).to.be.true; });
+      pm.test("intereses generados 890.000", function () { pm.expect(json.data.prestamos.total_intereses_generados === 890000).to.be.true; });
+      pm.test("capital pendiente 14.000.000", function () { pm.expect(json.data.prestamos.total_capital_pendiente === 14000000).to.be.true; });
+      pm.test("intereses pendientes 640.000", function () { pm.expect(json.data.prestamos.total_intereses_pendientes === 640000).to.be.true; });
+      pm.test("pagos: 5 por 3.870.000", function () { pm.expect(json.data.pagos.cantidad_pagos === 5 && json.data.pagos.total_pagado === 3870000).to.be.true; });
+      pm.test("pagos a interés 70.000", function () { pm.expect(json.data.pagos.por_tipo.find(t => t.tipo_abono === 'interes').total === 70000).to.be.true; });
+      pm.test("2 periodos distribuidos", function () { pm.expect(json.data.intereses_distribuidos_a_ahorradores.length === 2 && json.data.intereses_distribuidos_a_ahorradores[0].cantidad_ahorradores === 10).to.be.true; });
+      pm.test("mayor ahorro U003", function () { pm.expect(json.data.estudiantes_con_mayor_ahorro[0].usuario_id === 'U003').to.be.true; });
+      pm.test("5 mayores ahorradores", function () { pm.expect(json.data.estudiantes_con_mayor_ahorro.length === 5).to.be.true; });
+    language: text/javascript
+examples: ./.resources/★ HU10 - Consultar estadísticas de la cooperativa.resources/examples
+order: 1000

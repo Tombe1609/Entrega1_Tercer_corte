@@ -1,0 +1,31 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/funcionarios"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "nombre": "Pedro Pérez",
+        "cargo": "Portero",
+        "telefono": "3102001007",
+        "email": "pedro.perez@universidad.edu.co"
+      }
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": false,
+        "message": "Los datos enviados no son válidos.",
+        "errors": [
+          "El campo \"cargo\" debe ser uno de: Director financiero, Asesor de créditos, Tesorero, Auxiliar administrativo, Analista financiero, Coordinador de cartera."
+        ]
+      }
+order: 1000

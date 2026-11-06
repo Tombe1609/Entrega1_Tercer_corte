@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 4:** Como estudiante, quiero realizar depósitos o retiros, para mantener actualizado mi saldo de ahorro y consultar los movimientos.
+
+  **Funcionalidad:** Depósitos y retiros con validación de saldo.
+order: 5000

@@ -1,0 +1,157 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/reportes/estadisticas"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Estadísticas de la cooperativa consultadas correctamente.",
+        "data": {
+          "estudiantes": {
+            "cantidad": 11
+          },
+          "ahorros": {
+            "total_ahorrado": 27200000
+          },
+          "prestamos": {
+            "cantidad": 9,
+            "total_prestado": 17800000,
+            "total_intereses_generados": 890000,
+            "total_capital_pendiente": 14000000,
+            "total_intereses_pendientes": 640000,
+            "por_estado": [
+              {
+                "estado": "activo",
+                "cantidad": 8
+              },
+              {
+                "estado": "pagado",
+                "cantidad": 1
+              }
+            ]
+          },
+          "pagos": {
+            "cantidad_pagos": 5,
+            "total_pagado": 3870000,
+            "por_tipo": [
+              {
+                "tipo_abono": "capital",
+                "cantidad_pagos": 3,
+                "total": 3800000,
+                "promedio_pago": 1266666.67
+              },
+              {
+                "tipo_abono": "interes",
+                "cantidad_pagos": 2,
+                "total": 70000,
+                "promedio_pago": 35000
+              }
+            ]
+          },
+          "intereses_distribuidos_a_ahorradores": [
+            {
+              "periodo": "2026-03",
+              "cantidad_ahorradores": 10,
+              "total_intereses_distribuidos": 500000
+            },
+            {
+              "periodo": "2026-04",
+              "cantidad_ahorradores": 11,
+              "total_intereses_distribuidos": 500000.01
+            }
+          ],
+          "estudiantes_con_mayor_ahorro": [
+            {
+              "usuario_id": "U003",
+              "nombre": "Carlos Andrés Gómez",
+              "saldo": 5000000
+            },
+            {
+              "usuario_id": "U008",
+              "nombre": "Valentina Isabel Pérez",
+              "saldo": 4500000
+            },
+            {
+              "usuario_id": "U007",
+              "nombre": "Mateo Sebastián Castro",
+              "saldo": 3500000
+            },
+            {
+              "usuario_id": "U002",
+              "nombre": "María Fernanda López",
+              "saldo": 3000000
+            },
+            {
+              "usuario_id": "U005",
+              "nombre": "Andrés Felipe Torres",
+              "saldo": 2500000
+            }
+          ],
+          "estudiantes_con_prestamo_activo": [
+            {
+              "prestamo_id": "P004",
+              "usuario_id": "U004",
+              "capital_pendiente": 3000000,
+              "interes_pendiente": 150000,
+              "nombre": "Laura Daniela Rodríguez"
+            },
+            {
+              "prestamo_id": "P008",
+              "usuario_id": "U008",
+              "capital_pendiente": 3000000,
+              "interes_pendiente": 100000,
+              "nombre": "Valentina Isabel Pérez"
+            },
+            {
+              "prestamo_id": "P002",
+              "usuario_id": "U002",
+              "capital_pendiente": 2000000,
+              "interes_pendiente": 100000,
+              "nombre": "María Fernanda López"
+            },
+            {
+              "prestamo_id": "P003",
+              "usuario_id": "U003",
+              "capital_pendiente": 2000000,
+              "interes_pendiente": 100000,
+              "nombre": "Carlos Andrés Gómez"
+            },
+            {
+              "prestamo_id": "P005",
+              "usuario_id": "U005",
+              "capital_pendiente": 1500000,
+              "interes_pendiente": 75000,
+              "nombre": "Andrés Felipe Torres"
+            },
+            {
+              "prestamo_id": "P001",
+              "usuario_id": "U001",
+              "capital_pendiente": 1000000,
+              "interes_pendiente": 50000,
+              "nombre": "Juan Carlos Muñoz"
+            },
+            {
+              "prestamo_id": "P009",
+              "usuario_id": "U009",
+              "capital_pendiente": 1000000,
+              "interes_pendiente": 50000,
+              "nombre": "Sebastián David Moreno"
+            },
+            {
+              "prestamo_id": "P006",
+              "usuario_id": "U006",
+              "capital_pendiente": 500000,
+              "interes_pendiente": 15000,
+              "nombre": "Sofía Valentina Herrera"
+            }
+          ]
+        }
+      }
+order: 1000

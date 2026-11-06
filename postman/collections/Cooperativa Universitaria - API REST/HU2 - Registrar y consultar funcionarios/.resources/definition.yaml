@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.
+
+  **Funcionalidad:** Registrar y consultar funcionarios.
+order: 3000

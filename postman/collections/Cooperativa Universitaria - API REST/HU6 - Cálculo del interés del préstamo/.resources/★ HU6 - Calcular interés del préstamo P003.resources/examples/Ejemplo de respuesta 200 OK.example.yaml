@@ -1,0 +1,34 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/prestamos/P003/interes"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Interés del préstamo calculado correctamente.",
+        "data": {
+          "prestamo_id": "P003",
+          "usuario_id": "U003",
+          "estado": "activo",
+          "tasa_interes": 0.05,
+          "sobre_capital_inicial": {
+            "capital_inicial": 3000000,
+            "interes_calculado": 150000,
+            "total_calculado": 3150000
+          },
+          "sobre_capital_pendiente": {
+            "capital_pendiente": 3000000,
+            "interes_calculado": 150000,
+            "total_pendiente_calculado": 3150000
+          },
+          "interes_pendiente_registrado": 150000
+        }
+      }
+order: 1000

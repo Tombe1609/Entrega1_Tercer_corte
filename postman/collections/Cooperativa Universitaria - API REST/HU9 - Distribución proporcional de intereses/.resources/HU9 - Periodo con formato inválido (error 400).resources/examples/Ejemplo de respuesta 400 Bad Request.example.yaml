@@ -1,0 +1,29 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/distribucion-intereses"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "periodo": "abril",
+        "intereses_generados": 500000
+      }
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": false,
+        "message": "Los datos enviados no son válidos.",
+        "errors": [
+          "El campo \"periodo\" debe tener el formato AAAA-MM (ejemplo: 2026-04)."
+        ]
+      }
+order: 1000

@@ -1,0 +1,37 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/prestamos/P003/pagos"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Historial de pagos consultado correctamente.",
+        "data": {
+          "prestamo": {
+            "prestamo_id": "P003",
+            "usuario_id": "U003",
+            "capital_pendiente": 2000000,
+            "interes_pendiente": 100000,
+            "estado": "activo"
+          },
+          "cantidad_pagos": 1,
+          "pagos": [
+            {
+              "pago_id": "PG004",
+              "prestamo_id": "P003",
+              "usuario_id": "U003",
+              "tipo_abono": "capital",
+              "valor": 1000000,
+              "fecha": "2026-10-13T22:04:37.942Z"
+            }
+          ]
+        }
+      }
+order: 1000

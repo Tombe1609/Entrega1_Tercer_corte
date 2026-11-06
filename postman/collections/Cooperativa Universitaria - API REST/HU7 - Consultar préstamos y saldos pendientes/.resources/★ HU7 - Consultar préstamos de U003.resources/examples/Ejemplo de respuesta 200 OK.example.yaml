@@ -1,0 +1,38 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/estudiantes/U003/prestamos"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Préstamos del estudiante consultados correctamente.",
+        "data": {
+          "estudiante": {
+            "usuario_id": "U003",
+            "nombre": "Carlos Andrés Gómez"
+          },
+          "cantidad_prestamos": 1,
+          "total_capital_pendiente": 3000000,
+          "total_interes_pendiente": 150000,
+          "prestamos": [
+            {
+              "prestamo_id": "P003",
+              "fin_id": "FE004",
+              "finalidad": "Compra de libros",
+              "capital_inicial": 3000000,
+              "capital_pendiente": 3000000,
+              "interes_pendiente": 150000,
+              "estado": "activo",
+              "fecha_solicitud": "2026-02-03T10:00:00.000Z"
+            }
+          ]
+        }
+      }
+order: 1000

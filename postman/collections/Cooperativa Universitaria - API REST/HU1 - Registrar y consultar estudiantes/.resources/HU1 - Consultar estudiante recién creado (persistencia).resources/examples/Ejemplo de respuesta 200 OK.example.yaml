@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/estudiantes/{{usuario_nuevo}}"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Estudiante consultado correctamente.",
+        "data": {
+          "usuario_id": "U012",
+          "nombre": "Daniel Esteban Molina",
+          "documento": "1001001012",
+          "telefono": "3001111012",
+          "email": "daniel.molina@universidad.edu.co",
+          "tipo": "estudiante",
+          "estado": "activo"
+        }
+      }
+order: 1000

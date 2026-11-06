@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 6:** Como funcionario, quiero calcular el interés del préstamo aplicando una tasa del 5 %, para conocer el valor total que debe pagar el estudiante.
+
+  **Funcionalidad:** Consultar el cálculo del interés del préstamo.
+order: 7000

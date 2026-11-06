@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 7:** Como estudiante, quiero consultar mis préstamos y saldos pendientes, para conocer cuánto capital e interés debo.
+
+  **Funcionalidad:** Consultar préstamos y saldos pendientes de un estudiante.
+order: 8000

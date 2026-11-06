@@ -1,0 +1,29 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.
+
+  Mismo documento/correo que el estudiante recién creado: se rechaza.
+
+  **Código HTTP esperado:** 409
+url: "{{baseUrl}}/api/estudiantes"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Daniel Esteban Molina",
+      "documento": "1001001012",
+      "telefono": "3001111012",
+      "email": "daniel.molina@universidad.edu.co"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 409", function () { pm.response.to.have.status(409); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU1 - Registrar estudiante duplicado (error 409).resources/examples
+order: 3000

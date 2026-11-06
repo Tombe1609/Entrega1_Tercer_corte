@@ -1,0 +1,28 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.
+
+  U009 ya tiene un préstamo activo (regla del TXT).
+
+  **Código HTTP esperado:** 409
+url: "{{baseUrl}}/api/prestamos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "usuario_id": "U009",
+      "fin_id": "FE001",
+      "monto": 500000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 409", function () { pm.response.to.have.status(409); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU5 - Solicitar segundo préstamo activo (error 409).resources/examples
+order: 3000

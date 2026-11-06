@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.
+
+  **Funcionalidad:** Solicitar préstamos educativos con validaciones.
+order: 6000

@@ -1,0 +1,40 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/estudiantes/U004/prestamos?estado=activo"
+  method: GET
+  queryParams:
+    estado: activo
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Préstamos del estudiante consultados correctamente.",
+        "data": {
+          "estudiante": {
+            "usuario_id": "U004",
+            "nombre": "Laura Daniela Rodríguez"
+          },
+          "cantidad_prestamos": 1,
+          "total_capital_pendiente": 3000000,
+          "total_interes_pendiente": 150000,
+          "prestamos": [
+            {
+              "prestamo_id": "P004",
+              "fin_id": "FE002",
+              "finalidad": "Pago de semestre",
+              "capital_inicial": 5000000,
+              "capital_pendiente": 3000000,
+              "interes_pendiente": 150000,
+              "estado": "activo",
+              "fecha_solicitud": "2026-02-04T10:00:00.000Z"
+            }
+          ]
+        }
+      }
+order: 1000

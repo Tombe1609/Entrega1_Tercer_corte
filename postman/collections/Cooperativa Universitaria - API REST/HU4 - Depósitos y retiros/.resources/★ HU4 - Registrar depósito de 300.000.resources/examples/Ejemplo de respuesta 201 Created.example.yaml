@@ -1,0 +1,39 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/ahorros/{{ahorro_nuevo}}/depositos"
+  method: POST
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "valor": 300000,
+        "descripcion": "Depósito realizado por el estudiante"
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json; charset=utf-8
+  body:
+    type: json
+    content: |-
+      {
+        "success": true,
+        "message": "Depósito registrado correctamente.",
+        "data": {
+          "movimiento": {
+            "movimiento_id": "M014",
+            "ahorro_id": "A011",
+            "usuario_id": "U012",
+            "tipo": "deposito",
+            "valor": 300000,
+            "fecha": "2026-10-13T22:04:37.794Z",
+            "descripcion": "Depósito realizado por el estudiante"
+          },
+          "saldo_anterior": 0,
+          "saldo_actual": 300000
+        }
+      }
+order: 1000

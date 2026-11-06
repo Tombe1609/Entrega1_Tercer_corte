@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  **Historia de usuario 3:** Como estudiante, quiero abrir una cuenta de ahorro, para depositar y administrar mi dinero dentro de la cooperativa.
+
+  **Funcionalidad:** Crear y consultar cuentas de ahorro.
+order: 4000

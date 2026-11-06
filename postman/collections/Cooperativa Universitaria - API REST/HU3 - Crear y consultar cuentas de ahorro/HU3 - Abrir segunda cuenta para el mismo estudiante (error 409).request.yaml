@@ -1,0 +1,26 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 3:** Como estudiante, quiero abrir una cuenta de ahorro, para depositar y administrar mi dinero dentro de la cooperativa.
+
+  Un estudiante solo puede tener una cuenta de ahorro.
+
+  **Código HTTP esperado:** 409
+url: "{{baseUrl}}/api/ahorros"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "usuario_id": "{{usuario_nuevo}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 409", function () { pm.response.to.have.status(409); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU3 - Abrir segunda cuenta para el mismo estudiante (error 409).resources/examples
+order: 3000

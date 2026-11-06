@@ -1,0 +1,27 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
+
+  El préstamo P999 no existe.
+
+  **Código HTTP esperado:** 404
+url: "{{baseUrl}}/api/prestamos/P999/pagos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tipo_abono": "capital",
+      "valor": 1000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 404", function () { pm.response.to.have.status(404); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = false", function () { pm.expect(json.success).to.eql(false); });
+    language: text/javascript
+examples: ./.resources/HU8 - Pago a préstamo inexistente (error 404).resources/examples
+order: 7000

@@ -1,0 +1,22 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 9:** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
+
+  Los 10 registros iniciales (DI001-DI010) suman 500.000.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/distribucion-intereses?periodo=2026-03"
+method: GET
+queryParams:
+  periodo: 2026-03
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("10 registros", function () { pm.expect(json.data.cantidad_registros === 10).to.be.true; });
+      pm.test("suma 500000", function () { pm.expect(json.data.total_interes_recibido === 500000).to.be.true; });
+    language: text/javascript
+examples: ./.resources/HU9 - Consultar distribución original del periodo 2026-03.resources/examples
+order: 7000
