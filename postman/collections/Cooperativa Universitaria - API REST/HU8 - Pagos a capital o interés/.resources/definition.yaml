@@ -1,6 +1,7 @@
 $kind: collection
+name: HU8 - Pago de cuotas mensuales
 description: |-
-  **Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
-
-  **Funcionalidad:** Pagos diferenciados a capital o interés.
+  Como estudiante, quiero pagar cuotas vencidas desde mis ahorros.
+  Antes del vencimiento, el API rechaza el pago. Al pagar, actualiza en una sola
+  operación el saldo, el préstamo, la cuota, el movimiento y el historial.
 order: 9000

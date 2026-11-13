@@ -53,4 +53,16 @@ async function consultarMovimientos(req, res) {
   return ok(res, data, 'Movimientos consultados correctamente.');
 }
 
-module.exports = { crearCuenta, listarCuentas, obtenerCuenta, depositar, retirar, consultarMovimientos };
+async function transferir(req, res) {
+  const body = v.exigirCuerpo(req.body);
+  const errores = [];
+  const usuario_destino = v.idEnCuerpo(body, 'usuario_destino', 'usuario', errores);
+  const valor = v.montoPositivo(body, 'valor', errores, { max: 5000000 });
+  if (valor !== undefined && valor < 1000) errores.push('El campo "valor" debe ser al menos 1000.');
+  const descripcion = v.textoOpcional(body, 'descripcion', errores, { max: 160, porDefecto: 'Transferencia entre estudiantes' });
+  v.lanzarSiHayErrores(errores);
+  const resultado = await servicio.transferir(req.auth.id, usuario_destino, valor, descripcion);
+  return creado(res, resultado, 'Transferencia realizada correctamente.');
+}
+
+module.exports = { crearCuenta, listarCuentas, obtenerCuenta, depositar, retirar, consultarMovimientos, transferir };

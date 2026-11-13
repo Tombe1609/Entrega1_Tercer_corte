@@ -14,6 +14,7 @@ Todas las demás rutas exigen `Authorization: Bearer <token>` válido.
 | Consultar o modificar su cuenta de ahorro, movimientos y préstamos | Solo propios | Cualquier estudiante | Cualquier estudiante |
 | Crear cuenta de ahorro | Solo para su propio ID | Para cualquier estudiante | Para cualquier estudiante |
 | Solicitar préstamo | Solo para su propio ID | Para cualquier estudiante | Para cualquier estudiante |
+| Aprobar y desembolsar préstamo | No | Sí | Sí |
 | Listar estudiantes, funcionarios y cuentas | No | Sí | Sí |
 | Crear estudiante o funcionario por ruta directa | No | No | Sí |
 | Crear credenciales con `/api/gestion-usuarios` | No | No | Sí |
@@ -22,6 +23,8 @@ Todas las demás rutas exigen `Authorization: Bearer <token>` válido.
 | Registrar distribución de intereses | No | No | Sí |
 
 El middleware de propiedad consulta la relación del recurso en Mongo antes de permitir que un estudiante consulte o modifique una cuenta o préstamo. Las rutas administrativas admiten personal con rol `funcionario` o `rector` según la matriz.
+
+La ruta `POST /api/prestamos/:prestamo_id/aprobar` requiere uno de esos dos roles. La API registra el identificador del funcionario en `desembolsado_por` para dejar trazabilidad de la aprobación.
 
 ## Uso de Postman
 

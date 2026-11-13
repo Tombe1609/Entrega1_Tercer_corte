@@ -9,7 +9,7 @@ La API usa la base `cooperativa_universitaria` por defecto (`DB_NAME`) y estas c
 | `usuarios` | `usuario_id` (`U###`) | Estudiantes y sus datos de acceso |
 | `funcionarios` | `funcionario_id` (`F###`) | Funcionarios y sus datos de acceso |
 | `ahorros` | `ahorro_id` (`A###`) | Una cuenta de ahorro vinculada a un estudiante |
-| `movimientos_ahorro` | `movimiento_id` (`M###`) | Depósitos y retiros vinculados a una cuenta |
+| `movimientos_ahorro` | `movimiento_id` (`M###`) | Depósitos, retiros y depósitos de desembolso vinculados a una cuenta |
 | `fines_educativos` | `fin_id` (`FE###`) | Catálogo de finalidades de préstamo |
 | `prestamos` | `prestamo_id` (`P###`) | Préstamo, estudiante, finalidad y saldos |
 | `pagos_prestamo` | `pago_id` (`PG###`) | Pagos de capital o intereses vinculados a préstamos |
@@ -26,6 +26,12 @@ usuarios.usuario_id ──< ahorros.usuario_id ──< movimientos_ahorro.ahorro
 ```
 
 MongoDB no crea claves foráneas entre estas colecciones. La API valida esas referencias al crear operaciones. Por eso es importante conservar las validaciones y no insertar documentos relacionados directamente sin comprobar sus IDs.
+
+### Solicitud y desembolso de préstamos
+
+Una solicitud nueva se guarda en `prestamos` con `estado: "pendiente"`; no afecta el saldo de ahorro. Al aprobarla, la API cambia el préstamo a `activo` y añade `fecha_desembolso` y `desembolsado_por`, incrementa `ahorros.saldo` y crea en `movimientos_ahorro` un depósito con descripción `Desembolso del préstamo P###`. Estos cambios se confirman juntos; una solicitud pendiente no se puede pagar y una segunda aprobación responde 409 sin duplicar el movimiento.
+
+El catálogo se almacena en `productos` con `fecha_inicio` opcional y `fecha_fin` obligatoria. La lista y el pago respetan las fechas. `usuarios_compradores` se actualiza atómicamente para que el mismo estudiante no pueda comprar dos veces el mismo producto. Las compras completadas se almacenan en `compras`. Comprar descuenta el ahorro y registra un movimiento de retiro dentro de la misma operación. Las transferencias entre usuarios escriben un retiro en origen y un depósito en destino; el saldo de ambas cuentas y sus dos movimientos deben quedar confirmados juntos. Las cuotas se guardan como arreglo dentro de cada préstamo; pagar una cuota reduce ahorros, registra el pago y el movimiento, y actualiza la deuda en una operación coordinada. Una financiación de producto guarda su `producto_id`; antes de desembolsar, el funcionario verifica que siga vigente y que el estudiante aún no lo haya comprado.
 
 ## Estado de Atlas
 

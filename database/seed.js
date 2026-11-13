@@ -21,6 +21,8 @@ const ID_POR_COLECCION = {
   prestamos: 'prestamo_id',
   pagos_prestamo: 'pago_id',
   distribucion_intereses: 'distribucion_id',
+  productos: 'producto_id',
+  compras: 'compra_id',
 };
 
 // Índices únicos definidos en el TXT original.
@@ -33,6 +35,8 @@ const INDICES = {
   prestamos: ['prestamo_id'],
   pagos_prestamo: ['pago_id'],
   distribucion_intereses: ['distribucion_id'],
+  productos: ['producto_id'],
+  compras: ['compra_id'],
 };
 
 async function main() {
@@ -60,7 +64,7 @@ async function main() {
     const col = db.collection(nombre);
     let insertados = 0;
     let yaExistian = 0;
-    for (const doc of datos[nombre]) {
+    for (const doc of (datos[nombre] || [])) {
       const existe = await col.findOne({ [campoId]: doc[campoId] }, { projection: { _id: 1 } });
       if (existe) {
         yaExistian += 1;

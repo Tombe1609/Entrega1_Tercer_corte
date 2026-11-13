@@ -1,0 +1,8 @@
+$kind: http-request
+description: |-
+  Consulta los pagos registrados para el préstamo P005.
+url: "{{baseUrl}}/api/prestamos/P005/pagos"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+order: 2000

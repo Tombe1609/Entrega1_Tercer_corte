@@ -1,13 +1,15 @@
-# Cooperativa Universitaria de Ahorro y Crédito Educativo - API REST
+# Cooperativa Universitaria
 
-API REST desarrollada con **Node.js, Express y MongoDB** que implementa el proyecto de MongoDB de la cooperativa (ahorros de estudiantes, préstamos educativos con interés del 5 %, pagos a capital o interés, distribución proporcional de intereses y estadísticas para el rector). Corresponde a la evaluación "API REST con Node.js y MongoDB (MVP)".
+Proyecto académico con tres clientes: aplicación Android, portal web React y API REST en **Node.js/Express** con persistencia en **MongoDB**. La API centraliza autenticación, permisos y reglas de ahorros, transferencias, préstamos, cuotas, productos y compras.
 
 **Integrantes:** Cristian David Tombe Yalanda · Laura Sofia Salazar Sandoval
 
 ## 1. Tecnologías
 
 - Node.js 18 o superior (recomendado 20 o 22 LTS)
-- Express 4 (servidor y rutas)
+- Express 4 (API en puerto 3000 y servidor web estático en puerto 4000)
+- React 18 y Vite (interfaz web)
+- CORS con lista permitida de orígenes configurada en `CORS_ORIGINS`
 - MongoDB Atlas + driver oficial `mongodb`
 - `dotenv` (variables de entorno) y `nodemon` (solo desarrollo)
 - Sin librerías de validación: las validaciones están en `src/utils/validadores.js`.
@@ -22,7 +24,6 @@ API REST desarrollada con **Node.js, Express y MongoDB** que implementa el proye
 ## 3. Instalación paso a paso
 
 ```powershell
-cd cooperativa-api
 npm install
 copy .env.example .env
 ```
@@ -67,6 +68,8 @@ npm start        # o: npm run dev  (reinicia con cada cambio)
 
 `http://localhost:3000` · comprobación: `GET http://localhost:3000/api/health`
 
+La interfaz web complementaria y sus instrucciones de ejecución están en [`README_WEB.md`](README_WEB.md). Durante desarrollo usa Vite en `http://localhost:5173` y el proxy comparte la API de este servidor.
+
 Todas las respuestas son JSON: `{ "success": true|false, "message": "...", "data": {...} }`. Los errores incluyen `message` (y `errors` con la lista de campos inválidos en los 400).
 
 Códigos usados: **200** consulta correcta · **201** recurso creado · **400** datos inválidos o regla de negocio incumplida (saldo insuficiente, pago mayor a la deuda, monto sobre el límite) · **404** recurso inexistente · **409** duplicado o conflicto (documento/correo repetido, cuenta ya existente, préstamo activo previo, periodo ya distribuido) · **500** error interno o MongoDB no disponible.
@@ -95,13 +98,21 @@ Las **10 funcionalidades** que se demuestran son HU1-HU10 (detalle y guía en [`
 | 3 | GET | `/api/ahorros/:ahorro_id` | Consultar cuenta | 200, 400, 404 |
 | 4 | POST | `/api/ahorros/:ahorro_id/depositos` | Depositar | 201, 400, 404 |
 | 4 | POST | `/api/ahorros/:ahorro_id/retiros` | Retirar (valida saldo) | 201, 400, 404 |
+| - | POST | `/api/ahorros/transferencias` | Transferir entre estudiantes (mínimo 1.000, máximo 5.000.000) | 201, 400, 403, 404 |
 | 4 | GET | `/api/ahorros/:ahorro_id/movimientos?tipo=` | Historial de movimientos | 200, 400, 404 |
-| 5 | POST | `/api/prestamos` | Solicitar préstamo educativo | 201, 400, 404, 409 |
+| 5 | POST | `/api/prestamos` | Solicitud pendiente con plazo de 1–3 meses y primera fecha de pago; admite `producto_id` | 201, 400, 404, 409 |
+| 5 | POST | `/api/prestamos/:prestamo_id/aprobar` | Funcionario/rector aprueba y desembolsa; actualiza ahorro y movimiento | 200, 403, 404, 409 |
 | 5 | GET | `/api/fines-educativos` | (apoyo) Finalidades válidas | 200 |
+| - | GET | `/api/productos` | Catálogo activo para estudiantes; catálogo completo para administración | 200 |
+| - | POST | `/api/productos` | Crear artículo o servicio (funcionario/rector) | 201, 400 |
+| - | PATCH | `/api/productos/:producto_id` | Editar nombre, categoría, descripción, precio y vigencia (funcionario/rector); protege solicitudes de financiación pendientes | 200, 400, 403, 404, 409 |
+| - | PATCH | `/api/productos/:producto_id/estado` | Cerrar o reactivar una publicación dentro de su vigencia | 200, 403, 404, 409 |
+| - | POST | `/api/productos/:producto_id/compras` | Comprar desde ahorros y registrar el débito | 201, 400, 404 |
+| - | GET | `/api/productos/compras/mias` | Consultar compras del estudiante y bloquear compras repetidas | 200 |
 | 5 | GET | `/api/prestamos/:prestamo_id` | (apoyo) Consultar un préstamo | 200, 400, 404 |
 | 6 | GET | `/api/prestamos/:prestamo_id/interes` | Calcular interés y total | 200, 400, 404 |
-| 7 | GET | `/api/estudiantes/:usuario_id/prestamos?estado=` | Préstamos y saldos pendientes | 200, 400, 404 |
-| 8 | POST | `/api/prestamos/:prestamo_id/pagos` | Pago a `capital` o `interes` | 201, 400, 404 |
+| 7 | GET | `/api/estudiantes/:usuario_id/prestamos?estado=` | Solicitudes, préstamos y saldos pendientes (`pendiente`, `activo`, `pagado`) | 200, 400, 404 |
+| 8 | POST | `/api/prestamos/:prestamo_id/cuotas/:numero/pagar` | Pagar cuota mensual desde ahorros | 201, 400, 403, 409 |
 | 8 | GET | `/api/prestamos/:prestamo_id/pagos` | Historial de pagos | 200, 400, 404 |
 | 9 | GET | `/api/distribucion-intereses/calculo?intereses_generados=` | Calcular distribución (no guarda) | 200, 400 |
 | 9 | POST | `/api/distribucion-intereses` | Calcular y guardar un periodo | 201, 400, 409 |
@@ -145,7 +156,7 @@ El resultado reciente de compilación y pruebas funcionales está en [`docs/veri
    npm run seed:login-demo
    npm start
    ```
-2. En Postman: **Import** → `postman/cooperativa.postman_collection.json`; configura `baseUrl` como `http://localhost:3001` y `demoLoginPassword` con la misma contraseña local definida para `DEMO_LOGIN_PASSWORD`.
+2. En Postman: **Import** → `postman/cooperativa.postman_collection.json`; configura `baseUrl` como `http://localhost:3000` y `demoLoginPassword` con la misma contraseña local definida para `DEMO_LOGIN_PASSWORD`.
 3. Ejecuta `00 - Verificación` primero para comprobar health, el rechazo 401 sin token, el control de propiedad y obtener un token rector. Luego ejecuta las carpetas en orden (HU1 → HU10), o **Run collection**. El token se guarda automáticamente en `{{token}}`; los IDs se guardan en variables de colección.
 4. Las peticiones con ★ son las 10 demostraciones (HU4 y HU8 usan dos).
 5. **Reproducibilidad:** la colección crea datos (U012, F006, A011, P009, PG004-PG005, distribución 2026-04). Para repetirla cambia `DB_NAME` a un nombre nuevo y vuelve a ejecutar seed y credenciales. No borres `cooperativa_universitaria` ni otra base que quieras conservar.
@@ -196,13 +207,16 @@ Cree antes el repositorio en github.com (New repository) como **Public** y sin R
 ## Estructura
 
 ```
-cooperativa-api/
-├── src/  config/ routes/ controllers/ services/ middlewares/ utils/  app.js  server.js
-├── database/  seed.js  datos-iniciales.js
-├── postman/   cooperativa.postman_collection.json
-├── docs/      historias-usuario.md
-├── .env.example  .gitignore  package.json  package-lock.json  README.md
+/
+├── android/  app Android con Kotlin y Jetpack Compose
+├── web/      portal React/Vite y servidor Express independiente
+├── src/      API Express: config, routes, controllers, services y middlewares
+├── database/ seeds de demostración
+├── postman/  colección de solicitudes API
+├── docs/     historias, arquitectura, MongoDB y seguridad
+└── .env.example, package.json, README.md
 ```
 
-Flujo de una petición: `routes` → `controllers` (validan la entrada) → `services` (reglas de negocio y MongoDB) → respuesta JSON; cualquier error llega a `middlewares/errorHandler.js`.
+Para ejecutar los dos servidores web, consulta [README_WEB.md](README_WEB.md). La guía Android está en [android/README.md](android/README.md).
 
+Flujo de una petición: `routes` → `controllers` (validan la entrada) → `services` (reglas de negocio y MongoDB) → respuesta JSON; cualquier error llega a `middlewares/errorHandler.js`.

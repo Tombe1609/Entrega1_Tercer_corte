@@ -1,0 +1,22 @@
+$kind: http-request
+description: |-
+  **Historia de usuario 5:** Como funcionario, quiero aprobar una solicitud pendiente, para autorizar el desembolso del préstamo.
+
+  Requiere una sesión autenticada de funcionario o rector. Acredita el capital a la cuenta de ahorro y registra un movimiento de desembolso.
+
+  **Código HTTP esperado:** 200
+url: "{{baseUrl}}/api/prestamos/{{prestamo_nuevo}}/aprobar"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Código HTTP esperado: 200", function () { pm.response.to.have.status(200); });
+      const json = pm.response.json();
+      pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
+      pm.test("préstamo activo", function () { pm.expect(json.data.prestamo.estado).to.eql('activo'); });
+      pm.test("movimiento de depósito creado", function () { pm.expect(json.data.movimiento.tipo).to.eql('deposito'); });
+      pm.test("saldo incrementado por el capital", function () { pm.expect(json.data.saldo_actual - json.data.saldo_anterior).to.eql(json.data.prestamo.capital_inicial); });
+    language: text/javascript
+order: 2500

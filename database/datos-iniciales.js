@@ -4,6 +4,35 @@
  * Solo se incluyen los datos iniciales: los ejemplos de las historias de
  * usuario del TXT (U012, A011, P009, DI011...) se crean desde la API.
  */
+function cuotasIniciales(capital, interes, plazo, primeraFecha) {
+  const base = new Date(primeraFecha);
+  let capitalAsignado = 0;
+  let interesAsignado = 0;
+  return Array.from({ length: plazo }, (_, indice) => {
+    const capitalCuota = indice === plazo - 1
+      ? Math.round((capital - capitalAsignado) * 100) / 100
+      : Math.round((capital / plazo) * 100) / 100;
+    const interesCuota = indice === plazo - 1
+      ? Math.round((interes - interesAsignado) * 100) / 100
+      : Math.round((interes / plazo) * 100) / 100;
+    capitalAsignado += capitalCuota;
+    interesAsignado += interesCuota;
+    const month = base.getUTCMonth() + indice;
+    const year = base.getUTCFullYear() + Math.floor(month / 12);
+    const monthFinal = month % 12;
+    const ultimoDia = new Date(Date.UTC(year, monthFinal + 1, 0)).getUTCDate();
+    const fechaVencimiento = new Date(Date.UTC(year, monthFinal, Math.min(base.getUTCDate(), ultimoDia), 17));
+    return {
+      numero: indice + 1,
+      fecha_vencimiento: fechaVencimiento,
+      capital: capitalCuota,
+      interes: interesCuota,
+      valor: Math.round((capitalCuota + interesCuota) * 100) / 100,
+      estado: "pendiente"
+    };
+  });
+}
+
 module.exports =
 {
   usuarios: [
@@ -397,6 +426,9 @@ module.exports =
       interes_pendiente: 50000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 1,
+      fecha_primer_pago: new Date("2026-04-01T17:00:00Z"),
+      cuotas: cuotasIniciales(1000000, 50000, 1, "2026-04-01T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-01T10:00:00Z")
     },
     {
@@ -409,6 +441,9 @@ module.exports =
       interes_pendiente: 100000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 1,
+      fecha_primer_pago: new Date("2026-03-02T17:00:00Z"),
+      cuotas: cuotasIniciales(2000000, 100000, 1, "2026-03-02T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-02T10:00:00Z")
     },
     {
@@ -421,6 +456,9 @@ module.exports =
       interes_pendiente: 150000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 1,
+      fecha_primer_pago: new Date("2026-03-03T17:00:00Z"),
+      cuotas: cuotasIniciales(3000000, 150000, 1, "2026-03-03T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-03T10:00:00Z")
     },
     {
@@ -433,6 +471,9 @@ module.exports =
       interes_pendiente: 150000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 3,
+      fecha_primer_pago: new Date("2026-04-02T17:00:00Z"),
+      cuotas: cuotasIniciales(3000000, 150000, 3, "2026-04-02T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-04T10:00:00Z")
     },
     {
@@ -445,6 +486,9 @@ module.exports =
       interes_pendiente: 75000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 1,
+      fecha_primer_pago: new Date("2026-03-05T17:00:00Z"),
+      cuotas: cuotasIniciales(1500000, 75000, 1, "2026-03-05T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-05T10:00:00Z")
     },
     {
@@ -454,9 +498,12 @@ module.exports =
       capital_inicial: 500000,
       interes_inicial: 25000,
       capital_pendiente: 500000,
-      interes_pendiente: 15000,
+      interes_pendiente: 25000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 1,
+      fecha_primer_pago: new Date("2026-03-06T17:00:00Z"),
+      cuotas: cuotasIniciales(500000, 25000, 1, "2026-03-06T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-06T10:00:00Z")
     },
     {
@@ -481,6 +528,9 @@ module.exports =
       interes_pendiente: 150000,
       tasa_interes: 0.05,
       estado: "activo",
+      plazo_meses: 1,
+      fecha_primer_pago: new Date("2026-03-08T17:00:00Z"),
+      cuotas: cuotasIniciales(3000000, 150000, 1, "2026-03-08T17:00:00Z"),
       fecha_solicitud: new Date("2026-02-08T10:00:00Z")
     }
   ],

@@ -17,6 +17,7 @@ router.use('/gestion-usuarios', require('./gestion-usuarios.routes'));
 router.use('/estudiantes', require('./estudiantes.routes'));
 router.use('/funcionarios', require('./funcionarios.routes'));
 router.use('/ahorros', require('./ahorros.routes'));
+router.use('/productos', require('./productos.routes'));
 router.get('/fines-educativos', asyncHandler(prestamosController.listarFines));
 router.use('/prestamos', require('./prestamos.routes'));
 router.use('/distribucion-intereses', require('./distribucion.routes'));

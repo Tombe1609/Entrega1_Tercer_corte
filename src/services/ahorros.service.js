@@ -79,6 +79,34 @@ async function registrarMovimiento(ahorro_id, tipo, valor, descripcion) {
   );
 }
 
+/** Transfiere fondos entre dos cuentas activas y registra el débito/crédito juntos. */
+async function transferir(usuario_origen, usuario_destino, valor, descripcion = 'Transferencia entre estudiantes') {
+  if (usuario_origen === usuario_destino) throw new AppError(400, 'No puedes transferir a tu propia cuenta.');
+  const ahorros = coleccion('ahorros');
+  const movimientos = coleccion('movimientos_ahorro');
+  const origen = await ahorros.findOne({ usuario_id: usuario_origen, estado: 'activo' });
+  const destino = await ahorros.findOne({ usuario_id: usuario_destino, estado: 'activo' });
+  if (!origen || !destino) throw new AppError(404, 'No se encontró una cuenta de ahorro activa para uno de los estudiantes.');
+  return conReintentoDeId('movimiento_id', () => ejecutarAtomico(async ({ session, alDeshacer }) => {
+    const debito = await ahorros.updateOne({ ahorro_id: origen.ahorro_id, estado: 'activo', saldo: { $gte: valor } }, { $inc: { saldo: -valor } }, { session });
+    confirmarEscritura(debito);
+    if (debito.matchedCount !== 1) throw new AppError(400, 'Saldo insuficiente para realizar la transferencia.');
+    alDeshacer(() => ahorros.updateOne({ ahorro_id: origen.ahorro_id }, { $inc: { saldo: valor } }));
+    const credito = await ahorros.updateOne({ ahorro_id: destino.ahorro_id, estado: 'activo' }, { $inc: { saldo: valor } }, { session });
+    confirmarEscritura(credito);
+    if (credito.matchedCount !== 1) throw new AppError(409, 'La cuenta destinataria cambió. Intenta de nuevo.');
+    alDeshacer(() => ahorros.updateOne({ ahorro_id: destino.ahorro_id }, { $inc: { saldo: -valor } }));
+    const [debito_id, credito_id] = await siguientesIds(movimientos, 'movimiento_id', 'M', 2, session);
+    const fecha = new Date();
+    const docs = [
+      { movimiento_id: debito_id, ahorro_id: origen.ahorro_id, usuario_id: usuario_origen, tipo: 'retiro', valor, fecha, descripcion: `${descripcion} · para ${usuario_destino}` },
+      { movimiento_id: credito_id, ahorro_id: destino.ahorro_id, usuario_id: usuario_destino, tipo: 'deposito', valor, fecha, descripcion: `${descripcion} · de ${usuario_origen}` },
+    ];
+    confirmarEscritura(await movimientos.insertMany(docs, { session }), 'No se pudo registrar el historial de la transferencia.');
+    return { transferencia: { valor, fecha, usuario_origen, usuario_destino }, saldo_origen: origen.saldo - valor, saldo_destino: destino.saldo + valor, movimientos: docs };
+  }));
+}
+
 /** HU4: consulta el historial de movimientos de una cuenta. */
 async function consultarMovimientos(ahorro_id, { tipo } = {}) {
   const cuenta = await obtenerCuenta(ahorro_id);
@@ -88,4 +116,4 @@ async function consultarMovimientos(ahorro_id, { tipo } = {}) {
   return { cuenta, cantidad: lista.length, movimientos: lista };
 }
 
-module.exports = { crearCuenta, listarCuentas, obtenerCuenta, registrarMovimiento, consultarMovimientos };
+module.exports = { crearCuenta, listarCuentas, obtenerCuenta, registrarMovimiento, transferir, consultarMovimientos };

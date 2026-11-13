@@ -2095,7 +2095,8 @@
                   "pm.test(\"interés 50000\", function () { pm.expect(json.data.interes_inicial === 50000).to.be.true; });",
                   "pm.test(\"tasa 5%\", function () { pm.expect(json.data.tasa_interes === 0.05).to.be.true; });",
                   "pm.test(\"id P009\", function () { pm.expect(json.data.prestamo_id === 'P009').to.be.true; });",
-                  "pm.collectionVariables.set(\"prestamo_nuevo\", json.data.prestamo_id);"
+                  "pm.collectionVariables.set(\"prestamo_nuevo\", json.data.prestamo_id);",
+                  "pm.test(\"estado pendiente\", function () { pm.expect(json.data.estado).to.eql('pendiente'); });"
                 ]
               }
             }
@@ -2119,7 +2120,7 @@
                 "prestamos"
               ]
             },
-            "description": "**Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.\n\nCrea el préstamo P009 para U009 (finalidad \"Otros gastos educativos\"). Interés inicial = 1.000.000 × 5 % = 50.000.\n\n**Código HTTP esperado:** 201",
+            "description": "**Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.\n\nCrea la solicitud P009 para U009 (finalidad \"Otros gastos educativos\"). Interés inicial = 1.000.000 × 5 % = 50.000. El saldo de ahorro no cambia hasta la aprobación.\n\n**Código HTTP esperado:** 201",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usuario_id\": \"U009\",\n  \"fin_id\": \"FE009\",\n  \"monto\": 1000000\n}",
@@ -2152,7 +2153,7 @@
                     "prestamos"
                   ]
                 },
-                "description": "**Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.\n\nCrea el préstamo P009 para U009 (finalidad \"Otros gastos educativos\"). Interés inicial = 1.000.000 × 5 % = 50.000.\n\n**Código HTTP esperado:** 201",
+                "description": "**Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.\n\nCrea la solicitud P009 para U009 (finalidad \"Otros gastos educativos\"). Interés inicial = 1.000.000 × 5 % = 50.000. El saldo de ahorro no cambia hasta la aprobación.\n\n**Código HTTP esperado:** 201",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"usuario_id\": \"U009\",\n  \"fin_id\": \"FE009\",\n  \"monto\": 1000000\n}",
@@ -2172,9 +2173,46 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Préstamo educativo registrado correctamente.\",\n  \"data\": {\n    \"prestamo_id\": \"P009\",\n    \"usuario_id\": \"U009\",\n    \"fin_id\": \"FE009\",\n    \"capital_inicial\": 1000000,\n    \"interes_inicial\": 50000,\n    \"capital_pendiente\": 1000000,\n    \"interes_pendiente\": 50000,\n    \"tasa_interes\": 0.05,\n    \"estado\": \"activo\",\n    \"fecha_solicitud\": \"2026-10-13T22:04:37.855Z\"\n  }\n}"
+              "body": "{\r\n  \"success\": true,\r\n  \"message\": \"Solicitud de préstamo registrada; está pendiente de aprobación.\",\r\n  \"data\": {\r\n    \"prestamo_id\": \"P009\",\r\n    \"usuario_id\": \"U009\",\r\n    \"fin_id\": \"FE009\",\r\n    \"capital_inicial\": 1000000,\r\n    \"interes_inicial\": 50000,\r\n    \"capital_pendiente\": 1000000,\r\n    \"interes_pendiente\": 50000,\r\n    \"tasa_interes\": 0.05,\r\n    \"estado\": \"pendiente\",\r\n    \"fecha_solicitud\": \"2026-11-09T12:00:00.000Z\"\r\n  }\r\n}"
             }
           ]
+        },
+        {
+          "name": "★ HU5 - Aprobar y desembolsar préstamo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP esperado: 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test(\"La respuesta es JSON con success = true\", function () { pm.expect(json.success).to.eql(true); });",
+                  "pm.test(\"préstamo activo\", function () { pm.expect(json.data.prestamo.estado).to.eql(\"activo\"); });",
+                  "pm.test(\"movimiento de depósito creado\", function () { pm.expect(json.data.movimiento.tipo).to.eql(\"deposito\"); });",
+                  "pm.test(\"saldo incrementado por el capital\", function () { pm.expect(json.data.saldo_actual - json.data.saldo_anterior).to.eql(json.data.prestamo.capital_inicial); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/prestamos/{{prestamo_nuevo}}/aprobar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "prestamos",
+                "{{prestamo_nuevo}}",
+                "aprobar"
+              ]
+            },
+            "description": "**Historia de usuario 5:** Como funcionario, quiero aprobar una solicitud pendiente, para autorizar el desembolso. Requiere sesión de funcionario o rector. Acredita el capital a ahorros y registra el movimiento."
+          },
+          "response": []
         },
         {
           "name": "HU5 - Solicitar segundo préstamo activo (error 409)",
@@ -2210,7 +2248,7 @@
                 "prestamos"
               ]
             },
-            "description": "**Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.\n\nU009 ya tiene un préstamo activo (regla del TXT).\n\n**Código HTTP esperado:** 409",
+            "description": "**Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.\n\nU009 ya tiene una solicitud pendiente o un préstamo activo.\n\n**Código HTTP esperado:** 409",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usuario_id\": \"U009\",\n  \"fin_id\": \"FE001\",\n  \"monto\": 500000\n}",
@@ -2642,7 +2680,9 @@
                   "pm.test(\"Código HTTP esperado: 200\", function () { pm.response.to.have.status(200); });",
                   "const json = pm.response.json();",
                   "pm.test(\"La respuesta es JSON con success = true\", function () { pm.expect(json.success).to.eql(true); });",
-                  "pm.test(\"capital pendiente 1000000\", function () { pm.expect(json.data.capital_pendiente === 1000000).to.be.true; });"
+                  "pm.test(\"capital pendiente 1000000\", function () { pm.expect(json.data.capital_pendiente === 1000000).to.be.true; });",
+                  "pm.test(\"estado activo después de aprobar\", function () { pm.expect(json.data.estado).to.eql(\"activo\"); });",
+                  "pm.test(\"fecha de desembolso guardada\", function () { pm.expect(json.data.fecha_desembolso).to.be.ok; });"
                 ]
               }
             }
@@ -3196,747 +3236,54 @@
       "description": "**Historia de usuario 7:** Como estudiante, quiero consultar mis préstamos y saldos pendientes, para conocer cuánto capital e interés debo.\n\n**Funcionalidad:** Consultar préstamos y saldos pendientes de un estudiante."
     },
     {
-      "name": "HU8 - Pagos a capital o interés",
+      "name": "HU8 - Pago de cuotas mensuales",
       "item": [
         {
-          "name": "★ HU8 - Abono a capital de 1.000.000 (P003)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 201\", function () { pm.response.to.have.status(201); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = true\", function () { pm.expect(json.success).to.eql(true); });",
-                  "pm.test(\"capital 2000000\", function () { pm.expect(json.data.prestamo.capital_pendiente === 2000000).to.be.true; });",
-                  "pm.test(\"interés 100000\", function () { pm.expect(json.data.prestamo.interes_pendiente === 100000).to.be.true; });",
-                  "pm.test(\"pago PG004\", function () { pm.expect(json.data.pago.pago_id === 'PG004').to.be.true; });"
-                ]
-              }
-            }
-          ],
+          "name": "HU8 - Pagar cuota desde ahorros",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
+              "raw": "{{baseUrl}}/api/prestamos/P005/cuotas/1/pagar",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "prestamos",
-                "P003",
-                "pagos"
+                "P005",
+                "cuotas",
+                "1",
+                "pagar"
               ]
             },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nCapital 3.000.000 → 2.000.000. El interés pendiente se recalcula: 2.000.000 × 5 % = 100.000. Se registra el pago PG004.\n\n**Código HTTP esperado:** 201",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 1000000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Paga una cuota vencida desde ahorros. Esta operación debita dinero; úsala solo sobre la base de datos de prueba. Requiere titular, cuota pendiente, fecha vencida y saldo suficiente."
           },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 201 Created",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P003",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nCapital 3.000.000 → 2.000.000. El interés pendiente se recalcula: 2.000.000 × 5 % = 100.000. Se registra el pago PG004.\n\n**Código HTTP esperado:** 201",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 1000000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Pago a capital registrado correctamente.\",\n  \"data\": {\n    \"pago\": {\n      \"pago_id\": \"PG004\",\n      \"prestamo_id\": \"P003\",\n      \"usuario_id\": \"U003\",\n      \"tipo_abono\": \"capital\",\n      \"valor\": 1000000,\n      \"fecha\": \"2026-10-13T22:04:37.942Z\"\n    },\n    \"prestamo\": {\n      \"prestamo_id\": \"P003\",\n      \"usuario_id\": \"U003\",\n      \"fin_id\": \"FE004\",\n      \"capital_inicial\": 3000000,\n      \"interes_inicial\": 150000,\n      \"capital_pendiente\": 2000000,\n      \"interes_pendiente\": 100000,\n      \"tasa_interes\": 0.05,\n      \"estado\": \"activo\",\n      \"fecha_solicitud\": \"2026-02-03T10:00:00.000Z\"\n    },\n    \"saldos_anteriores\": {\n      \"capital_pendiente\": 3000000,\n      \"interes_pendiente\": 150000\n    }\n  }\n}"
-            }
-          ]
+          "response": []
         },
         {
-          "name": "★ HU8 - Pago a interés de 50.000 (P008)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 201\", function () { pm.response.to.have.status(201); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = true\", function () { pm.expect(json.success).to.eql(true); });",
-                  "pm.test(\"capital sin cambio\", function () { pm.expect(json.data.prestamo.capital_pendiente === 3000000).to.be.true; });",
-                  "pm.test(\"interés 100000\", function () { pm.expect(json.data.prestamo.interes_pendiente === 100000).to.be.true; });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P008/pagos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "prestamos",
-                "P008",
-                "pagos"
-              ]
-            },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl interés pendiente baja de 150.000 a 100.000 y el capital (3.000.000) no cambia. Se registra el pago PG005.\n\n**Código HTTP esperado:** 201",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"interes\",\n  \"valor\": 50000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 201 Created",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P008/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P008",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl interés pendiente baja de 150.000 a 100.000 y el capital (3.000.000) no cambia. Se registra el pago PG005.\n\n**Código HTTP esperado:** 201",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"interes\",\n  \"valor\": 50000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Pago a interés registrado correctamente.\",\n  \"data\": {\n    \"pago\": {\n      \"pago_id\": \"PG005\",\n      \"prestamo_id\": \"P008\",\n      \"usuario_id\": \"U008\",\n      \"tipo_abono\": \"interes\",\n      \"valor\": 50000,\n      \"fecha\": \"2026-10-13T22:04:37.954Z\"\n    },\n    \"prestamo\": {\n      \"prestamo_id\": \"P008\",\n      \"usuario_id\": \"U008\",\n      \"fin_id\": \"FE008\",\n      \"capital_inicial\": 3000000,\n      \"interes_inicial\": 150000,\n      \"capital_pendiente\": 3000000,\n      \"interes_pendiente\": 100000,\n      \"tasa_interes\": 0.05,\n      \"estado\": \"activo\",\n      \"fecha_solicitud\": \"2026-02-08T10:00:00.000Z\"\n    },\n    \"saldos_anteriores\": {\n      \"capital_pendiente\": 3000000,\n      \"interes_pendiente\": 150000\n    }\n  }\n}"
-            }
-          ]
-        },
-        {
-          "name": "HU8 - Abono a capital superior al saldo (error 400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 400\", function () { pm.response.to.have.status(400); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = false\", function () { pm.expect(json.success).to.eql(false); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "prestamos",
-                "P003",
-                "pagos"
-              ]
-            },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl abono supera el capital pendiente: no se modifica nada.\n\n**Código HTTP esperado:** 400",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 99000000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 400 Bad Request",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P003",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl abono supera el capital pendiente: no se modifica nada.\n\n**Código HTTP esperado:** 400",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 99000000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": false,\n  \"message\": \"El abono (99000000) supera el capital pendiente (2000000).\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "HU8 - Pago a interés superior al interés pendiente (error 400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 400\", function () { pm.response.to.have.status(400); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = false\", function () { pm.expect(json.success).to.eql(false); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P008/pagos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "prestamos",
-                "P008",
-                "pagos"
-              ]
-            },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl pago supera el interés pendiente.\n\n**Código HTTP esperado:** 400",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"interes\",\n  \"valor\": 999999\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 400 Bad Request",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P008/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P008",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl pago supera el interés pendiente.\n\n**Código HTTP esperado:** 400",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"interes\",\n  \"valor\": 999999\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": false,\n  \"message\": \"El pago (999999) supera el interés pendiente (100000).\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "HU8 - Pago a préstamo ya pagado (error 400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 400\", function () { pm.response.to.have.status(400); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = false\", function () { pm.expect(json.success).to.eql(false); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P007/pagos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "prestamos",
-                "P007",
-                "pagos"
-              ]
-            },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nP007 está en estado \"pagado\".\n\n**Código HTTP esperado:** 400",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 1000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 400 Bad Request",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P007/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P007",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nP007 está en estado \"pagado\".\n\n**Código HTTP esperado:** 400",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 1000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": false,\n  \"message\": \"El préstamo P007 no está activo (estado: pagado).\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "HU8 - Tipo de abono inválido (error 400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 400\", function () { pm.response.to.have.status(400); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = false\", function () { pm.expect(json.success).to.eql(false); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "prestamos",
-                "P003",
-                "pagos"
-              ]
-            },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nSolo se admite \"capital\" o \"interes\".\n\n**Código HTTP esperado:** 400",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"otro\",\n  \"valor\": 1000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 400 Bad Request",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P003",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nSolo se admite \"capital\" o \"interes\".\n\n**Código HTTP esperado:** 400",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"otro\",\n  \"valor\": 1000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Bad Request",
-              "code": 400,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": false,\n  \"message\": \"Los datos enviados no son válidos.\",\n  \"errors\": [\n    \"El campo \\\"tipo_abono\\\" debe ser uno de: capital, interes.\"\n  ]\n}"
-            }
-          ]
-        },
-        {
-          "name": "HU8 - Pago a préstamo inexistente (error 404)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 404\", function () { pm.response.to.have.status(404); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = false\", function () { pm.expect(json.success).to.eql(false); });"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P999/pagos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "prestamos",
-                "P999",
-                "pagos"
-              ]
-            },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl préstamo P999 no existe.\n\n**Código HTTP esperado:** 404",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 1000\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 404 Not Found",
-              "originalRequest": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P999/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P999",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nEl préstamo P999 no existe.\n\n**Código HTTP esperado:** 404",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"tipo_abono\": \"capital\",\n  \"valor\": 1000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "status": "Not Found",
-              "code": 404,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": false,\n  \"message\": \"No existe un préstamo con id P999.\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "HU8 - Consultar historial de pagos de P003 (persistencia)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Código HTTP esperado: 200\", function () { pm.response.to.have.status(200); });",
-                  "const json = pm.response.json();",
-                  "pm.test(\"La respuesta es JSON con success = true\", function () { pm.expect(json.success).to.eql(true); });",
-                  "pm.test(\"1 pago\", function () { pm.expect(json.data.cantidad_pagos === 1).to.be.true; });",
-                  "pm.test(\"capital 2000000\", function () { pm.expect(json.data.prestamo.capital_pendiente === 2000000).to.be.true; });"
-                ]
-              }
-            }
-          ],
+          "name": "HU8 - Consultar historial de pagos",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
+              "raw": "{{baseUrl}}/api/prestamos/P005/pagos",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "prestamos",
-                "P003",
+                "P005",
                 "pagos"
               ]
             },
-            "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nHistorial del préstamo con sus saldos actuales.\n\n**Código HTTP esperado:** 200"
+            "description": "Consulta el historial de pagos registrados para P005."
           },
-          "response": [
-            {
-              "name": "Ejemplo de respuesta 200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{baseUrl}}/api/prestamos/P003/pagos",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "api",
-                    "prestamos",
-                    "P003",
-                    "pagos"
-                  ]
-                },
-                "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\nHistorial del préstamo con sus saldos actuales.\n\n**Código HTTP esperado:** 200"
-              },
-              "status": "OK",
-              "code": 200,
-              "_postman_previewlanguage": "json",
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                }
-              ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Historial de pagos consultado correctamente.\",\n  \"data\": {\n    \"prestamo\": {\n      \"prestamo_id\": \"P003\",\n      \"usuario_id\": \"U003\",\n      \"capital_pendiente\": 2000000,\n      \"interes_pendiente\": 100000,\n      \"estado\": \"activo\"\n    },\n    \"cantidad_pagos\": 1,\n    \"pagos\": [\n      {\n        \"pago_id\": \"PG004\",\n        \"prestamo_id\": \"P003\",\n        \"usuario_id\": \"U003\",\n        \"tipo_abono\": \"capital\",\n        \"valor\": 1000000,\n        \"fecha\": \"2026-10-13T22:04:37.942Z\"\n      }\n    ]\n  }\n}"
-            }
-          ]
+          "response": []
         }
       ],
-      "description": "**Historia de usuario 8:** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.\n\n**Funcionalidad:** Pagos diferenciados a capital o interés."
+      "description": "Como estudiante, quiero pagar cuotas mensuales vencidas desde mis ahorros. El endpoint rechaza pagos anticipados y actualiza juntos el saldo, el préstamo, la cuota, el movimiento y el historial."
     },
     {
       "name": "HU9 - Distribución proporcional de intereses",

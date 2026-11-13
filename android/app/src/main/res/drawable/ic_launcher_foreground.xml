@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- birrete (teal) -->
+    <path
+        android:fillColor="#124E5E"
+        android:pathData="M54,30 L82,43 L54,56 L26,43 Z" />
+    <!-- base del birrete (naranja) -->
+    <path
+        android:fillColor="#F4A541"
+        android:pathData="M40,52 L40,64 Q54,74 68,64 L68,52 L54,59 Z" />
+</vector>

@@ -1,0 +1,12 @@
+$kind: http-request
+description: |-
+  Paga la cuota 1 vencida del préstamo P005 desde los ahorros del titular.
+  Esta operación debita dinero; úsala solo sobre la base de datos de prueba.
+  El API solo acepta cuotas vencidas y con saldo suficiente.
+url: "{{baseUrl}}/api/prestamos/P005/cuotas/1/pagar"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+body:
+  type: none
+order: 1000

@@ -13,7 +13,7 @@ Las diez historias derivan del proyecto original (`Proyecto_Cooperativa_MongoDB_
 | 5 | Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios. | Solicitar préstamos educativos con validaciones | `POST /api/prestamos`<br>`GET /api/fines-educativos`<br>`GET /api/prestamos/:prestamo_id` | Se crea el préstamo P009 con interés inicial del 5 % (50.000 sobre 1.000.000); monto superior al límite, estudiante o finalidad inexistentes y préstamo activo previo se rechazan. |
 | 6 | Como funcionario, quiero calcular el interés del préstamo aplicando una tasa del 5 %, para conocer el valor total que debe pagar el estudiante. | Consultar el cálculo del interés del préstamo | `GET /api/prestamos/:prestamo_id/interes` | Para P003: interés 150.000 y total 3.150.000 (capital 3.000.000 + 5 %). |
 | 7 | Como estudiante, quiero consultar mis préstamos y saldos pendientes, para conocer cuánto capital e interés debo. | Consultar préstamos y saldos pendientes de un estudiante | `GET /api/estudiantes/:usuario_id/prestamos` | Lista los préstamos del estudiante con su finalidad educativa, capital e interés pendientes y los totales. |
-| 8 | Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda. | Pagos diferenciados a capital o interés | `POST /api/prestamos/:prestamo_id/pagos`<br>`GET /api/prestamos/:prestamo_id/pagos` | Abono a capital de 1.000.000 en P003: capital 2.000.000 e interés recalculado 100.000. Pago a interés de 50.000 en P008: interés baja a 100.000 y el capital no cambia. Ambos quedan en el historial. |
+| 8 | Como estudiante, quiero pagar mis cuotas mensuales desde mis ahorros cuando lleguen a su vencimiento, para mantener mi préstamo al día y ver reflejado cada pago en mi cuenta. | Consultar plan, pagar cuota vencida e historial | `GET /api/estudiantes/:usuario_id/prestamos`<br>`POST /api/prestamos/:prestamo_id/cuotas/:numero/pagar`<br>`GET /api/prestamos/:prestamo_id/pagos` | Cada cuota separa capital e interés y suma el total acordado; antes del vencimiento el API rechaza el pago. Al pagar, el saldo de ahorros, préstamo, cuota, movimiento e historial se actualizan juntos. |
 | 9 | Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa. | Calcular y registrar la distribución proporcional de intereses | `GET /api/distribucion-intereses/calculo`<br>`POST /api/distribucion-intereses`<br>`GET /api/distribucion-intereses` | Cada ahorrador recibe saldo / total ahorrado × intereses generados; el periodo queda guardado en `distribucion_intereses` y no puede repetirse (409). |
 | 10 | Como Rector, quiero consultar estadísticas de ahorros, préstamos, pagos e intereses, para supervisar el funcionamiento de la cooperativa. | Estadísticas y reportes administrativos | `GET /api/reportes/estadisticas` | Devuelve cantidad de estudiantes, total ahorrado, préstamos, capital e intereses pendientes, pagos por tipo, intereses distribuidos y rankings. |
 
@@ -54,10 +54,10 @@ Las diez historias derivan del proyecto original (`Proyecto_Cooperativa_MongoDB_
 - Funcionalidad: Consultar préstamos y saldos pendientes de un estudiante.
 - Endpoints: `GET /api/estudiantes/:usuario_id/prestamos`
 
-**HU8.** Como estudiante, quiero realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
+**HU8.** Como estudiante, quiero pagar mis cuotas mensuales desde mis ahorros cuando lleguen a su vencimiento, para mantener mi préstamo al día y ver reflejado cada pago en mi cuenta.
 
-- Funcionalidad: Pagos diferenciados a capital o interés.
-- Endpoints: `POST /api/prestamos/:prestamo_id/pagos`, `GET /api/prestamos/:prestamo_id/pagos`
+- Funcionalidad: Consultar el plan, pagar una cuota vencida y consultar el historial.
+- Endpoints: `GET /api/estudiantes/:usuario_id/prestamos`, `POST /api/prestamos/:prestamo_id/cuotas/:numero/pagar`, `GET /api/prestamos/:prestamo_id/pagos`
 
 **HU9.** Como sistema, quiero distribuir los intereses generados por los préstamos proporcionalmente entre los estudiantes ahorradores, para reconocer su participación en el fondo de la cooperativa.
 
@@ -107,11 +107,13 @@ Para cada funcionalidad: 1) decir la historia de usuario, 2) indicar método y e
 
 ### HU5 - Solicitar préstamos educativos con validaciones
 
-- **Necesidad que resuelve:** solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.
-- **Petición:** `POST /api/prestamos`
+- **Necesidad que resuelve:** solicitar un préstamo indicando su finalidad educativa y esperar la aprobación del funcionario antes de recibir el dinero.
+- **Solicitud:** `POST /api/prestamos`
 - **Cuerpo JSON:** `{ "usuario_id": "U009", "fin_id": "FE009", "monto": 1000000 }`
-- **Resultado a observar:** 201. `prestamo_id` = "P009", `interes_inicial` = 50000, `tasa_interes` = 0.05. Repetir la petición responde 409.
-- **Verificar en Compass:** prestamos → `{ "prestamo_id": "P009" }`
+- **Resultado a observar:** 201. `prestamo_id` = "P009", `estado` = "pendiente", `interes_inicial` = 50000, `tasa_interes` = 0.05. La cuenta de ahorro todavía no cambia. Repetir mientras exista una solicitud pendiente o un préstamo activo responde 409.
+- **Aprobación/desembolso:** `POST /api/prestamos/P009/aprobar`, solo para roles `funcionario` o `rector`, sin cuerpo JSON.
+- **Resultado a observar:** 200. El préstamo cambia a `activo`, la respuesta incluye `saldo_anterior`, `saldo_actual` y un movimiento de tipo `deposito`. La segunda aprobación responde 409 y no vuelve a acreditar el dinero.
+- **Verificar en Compass:** `prestamos` → P009 con `estado: "activo"` y `fecha_desembolso`; `ahorros` → saldo aumentado en 1.000.000; `movimientos_ahorro` → depósito con descripción `Desembolso del préstamo P009`. Los tres cambios se realizan como una sola operación.
 
 ### HU6 - Consultar el cálculo del interés del préstamo
 
@@ -129,13 +131,13 @@ Para cada funcionalidad: 1) decir la historia de usuario, 2) indicar método y e
 - **Resultado a observar:** 200. P003 con finalidad "Compra de libros", capital pendiente 3000000 e interés pendiente 150000 (si HU8 ya se ejecutó: 2000000 y 100000).
 - **Verificar en Compass:** prestamos → `{ "usuario_id": "U003" }`
 
-### HU8 - Pagos diferenciados a capital o interés
+### HU8 - Pago de cuotas mensuales desde ahorros
 
-- **Necesidad que resuelve:** realizar un pago y seleccionar si deseo abonarlo al capital o al interés, para controlar la forma en que disminuye mi deuda.
-- **Petición:** `POST /api/prestamos/P003/pagos y POST /api/prestamos/P008/pagos`
-- **Cuerpo JSON:** `{ "tipo_abono": "capital", "valor": 1000000 }  y  { "tipo_abono": "interes", "valor": 50000 }`
-- **Resultado a observar:** 201 en ambos. P003: capital 2000000 e interés 100000. P008: capital 3000000 (sin cambio) e interés 100000.
-- **Verificar en Compass:** prestamos P003 y P008; pagos_prestamo → PG004 y PG005
+- **Necesidad que resuelve:** pagar el valor total de una cuota mensual desde ahorros y evitar pagos separados que desincronicen el saldo de la cuenta y el préstamo.
+- **Petición:** `POST /api/prestamos/:prestamo_id/cuotas/:numero/pagar` (sin cuerpo JSON).
+- **Reglas:** solo el titular puede pagar; el préstamo debe estar activo, la cuota pendiente y vencida, y debe haber saldo suficiente. Una cuota anticipada se rechaza con 409.
+- **Resultado a observar:** 201; se marca la cuota como pagada, se reduce ahorro, capital e interés pendientes y se crea un movimiento de retiro y un registro en `pagos_prestamo`.
+- **Verificar en Compass:** `prestamos.cuotas`, `ahorros.saldo`, `movimientos_ahorro` y `pagos_prestamo` para el mismo préstamo.
 
 ### HU9 - Calcular y registrar la distribución proporcional de intereses
 

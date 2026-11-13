@@ -26,6 +26,7 @@ async function estadisticas() {
   const pagos = coleccion('pagos_prestamo');
   const distribucion = coleccion('distribucion_intereses');
   const activos = { estado: 'activo' };
+  const desembolsados = { estado: { $in: ['activo', 'pagado'] } };
 
   const [
     cantidadEstudiantes,
@@ -46,8 +47,8 @@ async function estadisticas() {
     usuarios.countDocuments({ tipo: 'estudiante' }),
     sumar(ahorros, 'saldo', activos),
     prestamos.countDocuments({}),
-    sumar(prestamos, 'capital_inicial'),
-    sumar(prestamos, 'interes_inicial'),
+    sumar(prestamos, 'capital_inicial', desembolsados),
+    sumar(prestamos, 'interes_inicial', desembolsados),
     sumar(prestamos, 'capital_pendiente', activos),
     sumar(prestamos, 'interes_pendiente', activos),
     sumarPorGrupo(prestamos, 'estado', 1),

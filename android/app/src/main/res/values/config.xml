@@ -1,0 +1,4 @@
+<resources>
+    <!-- URL predeterminada de desarrollo para el emulador Android. No es una credencial. -->
+    <string name="api_base_url" translatable="false">http://10.0.2.2:3000/</string>
+</resources>

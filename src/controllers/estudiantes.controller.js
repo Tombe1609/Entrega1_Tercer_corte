@@ -38,7 +38,7 @@ async function obtener(req, res) {
 async function consultarPrestamos(req, res) {
   const usuario_id = v.idParametro(req.params.usuario_id, 'usuario', 'usuario_id');
   const errores = [];
-  const estado = v.enumerado(req.query.estado, 'estado', ['activo', 'pagado'], errores);
+  const estado = v.enumerado(req.query.estado, 'estado', ['pendiente', 'activo', 'pagado'], errores);
   v.lanzarSiHayErrores(errores);
   const data = await prestamos.consultarDeEstudiante(usuario_id, { estado });
   return ok(res, data, 'Préstamos del estudiante consultados correctamente.');

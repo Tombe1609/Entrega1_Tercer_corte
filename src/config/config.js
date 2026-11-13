@@ -18,6 +18,7 @@ module.exports = {
   mongoUri,
   dbName: process.env.DB_NAME || 'cooperativa_universitaria',
   entorno: process.env.NODE_ENV || 'development',
+  corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean),
 
   // Regla del proyecto original: tasa fija del 5 %.
   tasaInteres: 0.05,

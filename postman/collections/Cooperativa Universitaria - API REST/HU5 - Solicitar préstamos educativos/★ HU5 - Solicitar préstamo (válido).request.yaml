@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   **Historia de usuario 5:** Como estudiante, quiero solicitar un préstamo indicando su finalidad educativa, para obtener financiación destinada exclusivamente a mis estudios.
 
-  Crea el préstamo P009 para U009 (finalidad "Otros gastos educativos"). Interés inicial = 1.000.000 × 5 % = 50.000.
+  Crea la solicitud P009 para U009 (finalidad "Otros gastos educativos"). Interés inicial = 1.000.000 × 5 % = 50.000. El saldo de ahorro no cambia hasta la aprobación.
 
   **Código HTTP esperado:** 201
 url: "{{baseUrl}}/api/prestamos"
@@ -25,6 +25,7 @@ scripts:
       pm.test("La respuesta es JSON con success = true", function () { pm.expect(json.success).to.eql(true); });
       pm.test("interés 50000", function () { pm.expect(json.data.interes_inicial === 50000).to.be.true; });
       pm.test("tasa 5%", function () { pm.expect(json.data.tasa_interes === 0.05).to.be.true; });
+      pm.test("estado pendiente", function () { pm.expect(json.data.estado).to.eql('pendiente'); });
       pm.test("id P009", function () { pm.expect(json.data.prestamo_id === 'P009').to.be.true; });
       pm.collectionVariables.set("prestamo_nuevo", json.data.prestamo_id);
     language: text/javascript

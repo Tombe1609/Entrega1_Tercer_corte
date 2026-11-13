@@ -1,0 +1,11 @@
+const router=require('express').Router();
+const asyncHandler=require('../utils/asyncHandler');
+const c=require('../controllers/productos.controller');
+const requireRole=require('../middlewares/requireRole');
+router.get('/',asyncHandler(c.listar));
+router.get('/compras/mias',requireRole('estudiante'),asyncHandler(c.misCompras));
+router.post('/',requireRole('funcionario','rector'),asyncHandler(c.crear));
+router.patch('/:producto_id',requireRole('funcionario','rector'),asyncHandler(c.actualizar));
+router.patch('/:producto_id/estado',requireRole('funcionario','rector'),asyncHandler(c.cambiarEstado));
+router.post('/:producto_id/compras',requireRole('estudiante'),asyncHandler((req,res)=>{req.body={...req.body,producto_id:req.params.producto_id};return c.comprar(req,res);}));
+module.exports=router;
