@@ -26,7 +26,7 @@ Esta es la estructura existente; una siguiente mejora será separar `MainViewMod
 
 ## URL de la API
 
-El valor predeterminado para un emulador Android es `http://10.0.2.2:3000/`, definido como `api_base_url` en `app/src/main/res/values/config.xml`. En login se puede cambiar el servidor, por ejemplo a `http://192.168.1.20:3000/` para un teléfono y un computador conectados a la misma red (reemplaza la IP por la real).
+La variante `debug` utiliza `http://10.0.2.2:3000/` desde el emulador y permite cambiar el servidor desde el login. Para generar el APK `release` con HTTPS, consulta [APK de entrega](README.md#apk-de-entrega).
 
 La dirección local no es adecuada para la entrega final. Configura la URL HTTPS del backend una vez desplegado. La app permite cambiarla desde login; si se va a publicar el APK, la URL de producción debe quedar como configuración recomendada.
 

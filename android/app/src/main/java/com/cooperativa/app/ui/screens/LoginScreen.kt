@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cooperativa.app.BuildConfig
 import com.cooperativa.app.data.Session
 import com.cooperativa.app.ui.AppCard
 import com.cooperativa.app.ui.AppTextField
@@ -56,6 +57,7 @@ fun LoginScreen(vm: MainViewModel, onLogged: (Session) -> Unit) {
     var password by remember { mutableStateOf("") }
     var dialogo by remember { mutableStateOf(false) }
     var servidor by remember { mutableStateOf(vm.servidor) }
+    var errorServidor by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) { vm.limpiarError() }
 
     Box(Modifier.fillMaxSize().background(Bg)) {
@@ -97,17 +99,23 @@ fun LoginScreen(vm: MainViewModel, onLogged: (Session) -> Unit) {
                 "¿Aún no eres socio? Comunícate con un funcionario para crear tu cuenta.",
                 color = Muted, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Servidor: ${vm.servidor}  ·  Cambiar", color = Teal, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth().clickable { servidor = vm.servidor; dialogo = true }.padding(12.dp),
-                textAlign = TextAlign.Center,
-            )
+            if (BuildConfig.DEBUG) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Servidor: ${vm.servidor}  ·  Cambiar", color = Teal, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth().clickable(enabled = !busy) {
+                        servidor = vm.servidor
+                        errorServidor = null
+                        dialogo = true
+                    }.padding(12.dp),
+                    textAlign = TextAlign.Center,
+                )
+            }
             Spacer(Modifier.height(24.dp))
         }
     }
 
-    if (dialogo) {
+    if (BuildConfig.DEBUG && dialogo) {
         AlertDialog(
             onDismissRequest = { dialogo = false },
             title = { Text("Dirección del servidor") },
@@ -115,13 +123,21 @@ fun LoginScreen(vm: MainViewModel, onLogged: (Session) -> Unit) {
                 Column {
                     Text("Emulador: http://10.0.2.2:3000\nCelular real: http://IP-DE-TU-PC:3000", fontSize = 13.sp, color = Muted)
                     Spacer(Modifier.height(10.dp))
-                    AppTextField("URL de la API", servidor, { servidor = it }, keyboard = KeyboardType.Uri)
+                    AppTextField("URL de la API", servidor, {
+                        servidor = it
+                        errorServidor = null
+                    }, keyboard = KeyboardType.Uri)
+                    ErrorText(errorServidor)
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    if (servidor.isNotBlank()) vm.cambiarServidor(servidor)
-                    dialogo = false
+                TextButton(enabled = !busy, onClick = {
+                    try {
+                        vm.cambiarServidor(servidor)
+                        dialogo = false
+                    } catch (e: IllegalArgumentException) {
+                        errorServidor = e.message
+                    }
                 }) { Text("Guardar") }
             },
             dismissButton = { TextButton(onClick = { dialogo = false }) { Text("Cancelar") } },

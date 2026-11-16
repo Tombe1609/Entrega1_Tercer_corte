@@ -5,10 +5,15 @@ const { conectar, soportaTransacciones, cerrar } = require('./config/database');
 async function iniciar() {
   try {
     await conectar();
+    if (config.entorno === 'production' && !soportaTransacciones()) {
+      throw new Error('Producción requiere MongoDB con transacciones (replica set o clúster compatible).');
+    }
   } catch (error) {
     console.error('No se pudo conectar con MongoDB:', error.message);
     console.error('Verifique que MongoDB esté en ejecución y que MONGODB_URI en .env sea correcta.');
-    process.exit(1);
+    await cerrar();
+    process.exitCode = 1;
+    return;
   }
 
   console.log(`MongoDB conectado (base de datos "${config.dbName}").`);
@@ -22,10 +27,34 @@ async function iniciar() {
     console.log(`API escuchando en http://localhost:${config.puerto}`);
   });
 
-  const apagar = async () => {
-    servidor.close();
-    await cerrar();
-    process.exit(0);
+  servidor.once('error', (error) => {
+    process.exitCode = 1;
+    if (error.code === 'EADDRINUSE') {
+      console.error(`El puerto ${config.puerto} ya está en uso. Si la API ya está encendida, usa ese servidor.`);
+      console.error(`Puedes comprobarlo en http://localhost:${config.puerto}/api/health.`);
+    } else {
+      console.error('No se pudo iniciar el servidor HTTP:', error.message);
+    }
+    cerrar().catch(() => console.error('No se pudo cerrar la conexión con MongoDB.'));
+  });
+
+  servidor.headersTimeout = 15_000;
+  servidor.requestTimeout = 30_000;
+
+  let cerrando = false;
+  const apagar = () => {
+    if (cerrando) return;
+    cerrando = true;
+    const limite = setTimeout(() => servidor.closeAllConnections(), 10_000);
+    limite.unref();
+    servidor.close(() => {
+      clearTimeout(limite);
+      cerrar().catch(() => {
+        console.error('No se pudo cerrar la conexión con MongoDB.');
+        process.exitCode = 1;
+      });
+    });
+    servidor.closeIdleConnections();
   };
   process.on('SIGINT', apagar);
   process.on('SIGTERM', apagar);

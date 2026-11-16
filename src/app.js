@@ -9,13 +9,21 @@ const { rutaNoEncontrada, manejadorErrores } = require('./middlewares/errorHandl
 const app = express();
 
 app.disable('x-powered-by');
+if (config.proxiesConfiables.length) app.set('trust proxy', config.proxiesConfiables);
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 app.use(express.json({ limit: '100kb' }));
 // La web corre en otro puerto: permite solo los orígenes locales de desarrollo.
 // En despliegue, CORS_ORIGINS debe contener únicamente el dominio web publicado.
-const allowedOrigins = new Set((config.corsOrigins.length ? config.corsOrigins : [
+const origenesLocales = [
   'http://localhost:5173', 'http://127.0.0.1:5173',
   'http://localhost:4000', 'http://127.0.0.1:4000',
-]).filter(Boolean));
+];
+const allowedOrigins = new Set(config.corsOrigins.length || config.entorno === 'production'
+  ? config.corsOrigins
+  : origenesLocales);
 app.use(cors({
   origin(origin, callback) { callback(null, !origin || allowedOrigins.has(origin)); },
   methods: ['GET', 'HEAD', 'POST', 'PATCH', 'OPTIONS'],

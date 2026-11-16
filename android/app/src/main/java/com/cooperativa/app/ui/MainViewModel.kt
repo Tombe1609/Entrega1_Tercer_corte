@@ -86,7 +86,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val session: StateFlow<Session?> = _session.asStateFlow()
 
     private fun cargarSesion(): Session? = try {
-        prefs.getString("session", null)?.let { gson.fromJson(it, Session::class.java) }
+        prefs.getString("session", null)
+            ?.takeIf { prefs.getString(ApiClient.KEY_SESSION_URL, null) == repo.baseUrl }
+            ?.let { gson.fromJson(it, Session::class.java) }
     } catch (e: Exception) {
         null
     }
@@ -97,15 +99,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             if (s == null) {
                 remove("session")
                 remove("auth_token")
+                remove(ApiClient.KEY_SESSION_URL)
             } else {
                 putString("session", gson.toJson(s))
-                if (!s.token.isNullOrBlank()) putString("auth_token", s.token)
+                putString("auth_token", s.token)
+                putString(ApiClient.KEY_SESSION_URL, repo.baseUrl)
             }
         }.apply()
     }
 
     val servidor: String get() = repo.baseUrl
-    fun cambiarServidor(url: String) = repo.cambiarServidor(url)
+    fun cambiarServidor(url: String) {
+        check(!_busy.value) { "Espera a que termine el inicio de sesión." }
+        repo.cambiarServidor(url)
+        logout()
+    }
 
     // ---------- Estado de formularios (cargando / error / éxito) ----------
     private val _busy = MutableStateFlow(false)

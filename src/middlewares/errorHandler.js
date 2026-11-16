@@ -33,7 +33,13 @@ function manejadorErrores(error, req, res, next) {
     message = 'No se pudo comunicar con la base de datos.';
   }
 
-  if (status === 500) console.error(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ->`, error);
+  if (status === 500) {
+    if (config.entorno === 'production') {
+      console.error(`[${new Date().toISOString()}] ${req.method} -> ${error.name || 'Error'}`);
+    } else {
+      console.error(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ->`, error);
+    }
+  }
 
   const cuerpo = { success: false, message };
   if (errors) cuerpo.errors = errors;

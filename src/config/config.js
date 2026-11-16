@@ -13,11 +13,22 @@ const mongoUri = mongoUriBase.includes('<db_password>')
   ? mongoUriBase.replace('<db_password>', encodeURIComponent(mongoPassword))
   : mongoUriBase;
 
+const entorno = process.env.NODE_ENV || 'development';
+const tokenSecret = process.env.AUTH_TOKEN_SECRET?.trim();
+if (entorno === 'production' && (
+  !tokenSecret || Buffer.byteLength(tokenSecret) < 32 ||
+  tokenSecret === 'CAMBIAR_POR_UN_SECRETO_ALEATORIO_LARGO'
+)) {
+  throw new Error('Configura AUTH_TOKEN_SECRET con un secreto aleatorio de al menos 32 bytes.');
+}
+
 module.exports = {
   puerto: Number(process.env.PORT) || 3000,
   mongoUri,
   dbName: process.env.DB_NAME || 'cooperativa_universitaria',
-  entorno: process.env.NODE_ENV || 'development',
+  entorno,
+  tokenSecret: tokenSecret || 'solo-desarrollo-cambiar-antes-de-produccion',
+  proxiesConfiables: (process.env.TRUSTED_PROXIES || '').split(',').map((proxy) => proxy.trim()).filter(Boolean),
   corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean),
 
   // Regla del proyecto original: tasa fija del 5 %.

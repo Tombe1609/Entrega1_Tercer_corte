@@ -44,6 +44,20 @@ Edite `.env` (ver `.env.example`):
 
 El archivo `.env` está en `.gitignore`: no se sube a GitHub. Guarde allí la URI de Atlas y no comparta credenciales.
 
+### API para el APK de entrega
+
+Ejecuta `npm ci --omit=dev` para instalar dependencias y `npm start` para arrancar el servicio. En el proveedor configura `NODE_ENV=production`, `MONGODB_URI`, `DB_NAME` y `AUTH_TOKEN_SECRET`. El secreto debe ser aleatorio, de al menos 32 bytes. Puedes generarlo con `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` y guardarlo directamente en el gestor de secretos del proveedor. Usa MongoDB con transacciones y configura el dominio HTTPS en el proveedor.
+
+Usa `GET /api/health` como chequeo de disponibilidad. Responde 200 si MongoDB contesta y 503 si no está disponible. El login limita a 30 solicitudes por IP en cinco minutos por instancia y devuelve 429 al excederlas. Si hay proxy inverso, configura en `TRUSTED_PROXIES` solo las IP o redes del proxy que el proveedor indica como confiables. Para varias instancias, aplica un límite compartido en el proveedor o con un almacén común.
+
+Consulta [la configuración del APK](android/README.md#apk-de-entrega) para conectar Android al dominio desplegado.
+
+### Demostración en Render
+
+`render.yaml` define un único servicio Express en el plan gratuito para el APK de demostración. En Render, crea un Blueprint desde este repositorio y escribe una URI completa de Atlas en `MONGODB_URI` y el nombre de la base de demostración en `DB_NAME`. Render genera el secreto del token. Si la URI usa el marcador `<db_password>`, añade `MONGODB_PASSWORD` como variable privada del servicio. Usa una cuenta de MongoDB limitada a la base elegida.
+
+En el servicio, abre **Connect → Outbound** para consultar los rangos de salida de Render y autorizarlos en Atlas. Comprueba `GET /api/health` desde la URL HTTPS resultante antes de configurar el APK. El plan gratuito entra en reposo tras 15 minutos sin tráfico y puede tardar cerca de un minuto en volver a responder.
+
 ## 5. Configuración y conexión de MongoDB
 
 - **MongoDB Atlas** ya funciona como replica set y permite transacciones. Autorice la IP del equipo y use la URI seed list de los tres nodos con `tls=true`, `authSource=admin` y el nombre del replica set. Esta configuración evita depender de consultas DNS SRV, que pueden estar bloqueadas en algunas redes. El marcador `<db_password>` se reemplaza desde `MONGODB_PASSWORD` y se codifica automáticamente.

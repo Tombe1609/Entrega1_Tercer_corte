@@ -1,6 +1,8 @@
 package com.cooperativa.app.data
 
 import android.content.SharedPreferences
+import com.cooperativa.app.BuildConfig
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -52,7 +54,7 @@ interface CooperativaApi {
     @GET("api/reportes/estadisticas") suspend fun estadisticas(): ApiResponse<Estadisticas>
 }
 
-/** Construye Retrofit con la dirección guardada (se puede cambiar desde la pantalla de login). */
+/** Release usa el servidor de compilación. Debug permite cambiarlo desde el login. */
 class ApiClient(
     private val prefs: SharedPreferences,
     private val defaultBaseUrl: String,
@@ -60,8 +62,9 @@ class ApiClient(
     private var cache: CooperativaApi? = null
 
     var baseUrl: String
-        get() = prefs.getString(KEY_URL, null) ?: defaultBaseUrl
+        get() = if (BuildConfig.DEBUG) prefs.getString(KEY_URL, null) ?: defaultBaseUrl else defaultBaseUrl
         set(value) {
+            check(BuildConfig.DEBUG) { "El servidor de esta versión es fijo." }
             prefs.edit().putString(KEY_URL, normalizar(value)).apply()
             cache = null
         }
@@ -69,11 +72,15 @@ class ApiClient(
     fun api(): CooperativaApi = cache ?: construir().also { cache = it }
 
     private fun construir(): CooperativaApi {
-        val log = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
-        val http = OkHttpClient.Builder()
+        val url = baseUrl
+        val builder = OkHttpClient.Builder()
+            // La selección de servidor y las credenciales se aplican al destino original.
+            .followRedirects(false)
+            .followSslRedirects(false)
             .addInterceptor { chain ->
                 val original = chain.request()
-                val token = prefs.getString(KEY_TOKEN, null)
+                val sesion = prefs.all
+                val token = (sesion[KEY_TOKEN] as? String)?.takeIf { sesion[KEY_SESSION_URL] == url }
                 val request = if (!token.isNullOrBlank() && !original.url.encodedPath.endsWith("/api/auth/login")) {
                     original.newBuilder().header("Authorization", "Bearer $token").build()
                 } else original
@@ -82,11 +89,12 @@ class ApiClient(
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)
-            .addInterceptor(log)
-            .build()
+        if (BuildConfig.DEBUG) {
+            builder.addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+        }
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .client(http)
+            .baseUrl(url)
+            .client(builder.build())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(CooperativaApi::class.java)
@@ -95,12 +103,17 @@ class ApiClient(
     companion object {
         private const val KEY_URL = "base_url"
         private const val KEY_TOKEN = "auth_token"
+        const val KEY_SESSION_URL = "session_base_url"
 
         fun normalizar(url: String): String {
-            var u = url.trim()
-            if (!u.startsWith("http://") && !u.startsWith("https://")) u = "http://$u"
-            if (!u.endsWith("/")) u += "/"
-            return u
+            val texto = url.trim()
+            val candidata = if ("://" in texto) texto else "http://$texto"
+            val destino = candidata.toHttpUrlOrNull()
+            require(destino != null && destino.username.isEmpty() && destino.password.isEmpty() &&
+                destino.query == null && destino.fragment == null) {
+                "Escribe una URL base HTTP o HTTPS válida, sin credenciales ni parámetros."
+            }
+            return destino.toString().trimEnd('/') + "/"
         }
     }
 }

@@ -6,7 +6,11 @@ const { ok } = require('../utils/respuestas');
 
 // Comprobación de que la API y MongoDB responden.
 router.get('/health', asyncHandler(async (req, res) => {
-  await obtenerDb().command({ ping: 1 });
+  try {
+    await obtenerDb().command({ ping: 1 }, { timeoutMS: 2000 });
+  } catch {
+    return res.status(503).json({ success: false, message: 'La API no tiene conexión con la base de datos.' });
+  }
   return ok(res, { api: 'activa', mongodb: 'conectado' }, 'La API y la base de datos están disponibles.');
 }));
 

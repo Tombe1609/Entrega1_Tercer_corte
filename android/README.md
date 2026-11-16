@@ -19,7 +19,13 @@ Aplicación móvil Android desarrollada con Kotlin y Jetpack Compose. Consume la
 - Dispositivo físico en la misma red: `http://IP_LOCAL_DEL_EQUIPO:3000/`; permitir el puerto 3000 en el firewall.
 - Producción: configurar la URL HTTPS del backend desplegado. No publicar credenciales ni usar HTTP para datos reales.
 
-La app obtiene el valor predeterminado de `app/src/main/res/values/config.xml` (`api_base_url`), separado de la configuración de Gradle. El inicio de sesión también permite cambiar la URL base.
+La variante `debug` lee `api_base_url` de `app/src/debug/res/values/config.xml` y permite cambiar el servidor desde el inicio de sesión.
+
+## APK de entrega
+
+Agrega `COOPERATIVA_API_URL=https://tu-dominio.example/` al archivo `gradle.properties` de tu carpeta de usuario de Gradle (en Windows, `%USERPROFILE%\.gradle\gradle.properties`). Reemplaza el ejemplo por la URL base real de la API, con HTTPS y con la ruta anterior a `/api/`. Retrofit añade `api/` a las rutas.
+
+Vuelve a sincronizar Gradle en Android Studio y genera un APK firmado de la variante `release`. Gradle genera el recurso de URL de esa variante. El servidor queda fijo y la variante exige HTTPS. Al actualizar desde una versión con una sesión anterior a este cambio, Android pedirá iniciar sesión de nuevo.
 
 ## Endpoints usados por Android
 
