@@ -41,10 +41,11 @@ La verificación confirma las 10 historias y las reglas de acceso principales en
 - Se reemplazó el formato firmado propio por JWT estándar usando `jsonwebtoken` 9.0.3 y HS256.
 - La API valida algoritmo, firma, emisor `cooperativa-api`, audiencia `cooperativa-app`, expiración de 8 horas, rol y versión de sesión. El identificador se transporta como `sub`; el correo no se incluye en el payload.
 - `npm test`: 7 pruebas aprobadas, incluidas firma, expiración, audiencia, manipulación de token, rol y idempotencia.
+- Prueba HTTP local con base temporal: login de estudiante respondió 200 y emitió un JWT con encabezado `typ=JWT`, `alg=HS256`; una ruta protegida aceptó el Bearer. La base `cooperativa_jwt_verificacion` se eliminó al terminar.
 - `npm audit`: 0 vulnerabilidades conocidas después de fijar `nodemon` 3.1.11 en desarrollo.
 - Android recibe el token como Bearer opaco, así que el contrato JSON de login no cambia. Las compilaciones Android debug/release se verificaron por separado; no fue necesario cambiar Retrofit.
 - La app Android se sincronizó en versión 1.5.1 (`versionCode` 7) tanto en la carpeta usada por Android Studio como en `android/` del repositorio.
 
 ### Pendiente de publicación
 
-El servicio Render aún debe desplegar esta versión de la API para que el inicio de sesión empiece a emitir JWT. La comprobación `/api/health` realizada antes del despliegue mostró API y MongoDB disponibles; no verifica esta nueva versión del código. Los tokens del formato previo serán rechazados después del despliegue y las personas deberán autenticarse de nuevo. No se requieren cambios ni limpieza de MongoDB para la migración.
+El commit `875c69d` quedó publicado en `main`. `/api/health` respondió 200 y reportó API activa y MongoDB conectado tras la publicación. Esa ruta de salud por sí sola no identifica qué commit está corriendo; confirmar la versión desplegada en el historial de Render antes de dar por migrados los inicios de sesión. Al activarse el código nuevo, los tokens del formato previo serán rechazados y las personas deberán autenticarse de nuevo. No se requieren cambios ni limpieza de MongoDB para la migración.
