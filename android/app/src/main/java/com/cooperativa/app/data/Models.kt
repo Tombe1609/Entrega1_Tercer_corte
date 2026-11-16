@@ -42,6 +42,8 @@ data class SolicitudCuentaRequest(
     val email: String,
     val password: String,
 )
+data class EditarSolicitudRequest(val nombre: String, val documento: String, val telefono: String, val email: String)
+data class EstadoCuentaRequest(val estado: String)
 data class SolicitudCuenta(
     val id: String = "", val nombre: String = "", val documento: String = "",
     val telefono: String = "", val email: String = "", val estado: String = "",

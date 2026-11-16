@@ -11,6 +11,8 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PATCH
+import retrofit2.http.PUT
+import retrofit2.http.DELETE
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
@@ -19,6 +21,7 @@ import java.util.concurrent.TimeUnit
 interface CooperativaApi {
     @POST("api/solicitudes-cuenta") suspend fun solicitarCuenta(@Body body: SolicitudCuentaRequest): ApiResponse<Map<String, String>>
     @GET("api/solicitudes-cuenta") suspend fun solicitudesCuenta(): ApiResponse<SolicitudesCuentaData>
+    @PUT("api/solicitudes-cuenta/{id}") suspend fun editarSolicitudCuenta(@Path("id") id: String, @Body body: EditarSolicitudRequest): ApiResponse<Map<String, String>>
     @PATCH("api/solicitudes-cuenta/{id}") suspend fun decidirSolicitudCuenta(@Path("id") id: String, @Body body: DecisionSolicitudRequest): ApiResponse<Map<String, String>>
     @PATCH("api/mi-perfil") suspend fun editarPerfil(@Body body: PerfilRequest): ApiResponse<PerfilResultado>
     @GET("api/auditoria-cuentas") suspend fun auditoriaCuentas(): ApiResponse<AuditoriaCuentasData>
@@ -26,6 +29,7 @@ interface CooperativaApi {
     @PATCH("api/auth/password")
     suspend fun cambiarPassword(@Body body: CambioPasswordRequest): ApiResponse<CambioPasswordResultado>
     @POST("api/gestion-usuarios") suspend fun crearCuentaAcceso(@Body body: CrearCuentaAccesoRequest): ApiResponse<CuentaAccesoCreada>
+    @PATCH("api/gestion-usuarios/estudiantes/{id}/estado") suspend fun cambiarEstadoEstudiante(@Path("id") id: String, @Body body: EstadoCuentaRequest): ApiResponse<Map<String, String>>
 
     @GET("api/estudiantes") suspend fun estudiantes(): ApiResponse<EstudiantesData>
     @GET("api/funcionarios") suspend fun funcionarios(): ApiResponse<FuncionariosData>
@@ -33,6 +37,7 @@ interface CooperativaApi {
     @GET("api/ahorros") suspend fun cuentas(): ApiResponse<CuentasData>
     @POST("api/ahorros") suspend fun crearCuenta(@Body body: CrearCuentaRequest): ApiResponse<Ahorro>
     @GET("api/ahorros/{id}") suspend fun cuenta(@Path("id") id: String): ApiResponse<Ahorro>
+    @DELETE("api/ahorros/{id}") suspend fun cerrarCuenta(@Path("id") id: String): ApiResponse<Map<String, String>>
     @POST("api/ahorros/{id}/depositos")
     suspend fun depositar(@Path("id") id: String, @Body body: MovimientoRequest): ApiResponse<MovimientoResultado>
     @POST("api/ahorros/{id}/retiros")

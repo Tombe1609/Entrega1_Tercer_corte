@@ -24,6 +24,12 @@ async function obtenerCuenta(req, res) {
   return ok(res, await servicio.obtenerCuenta(id), 'Cuenta de ahorro consultada correctamente.');
 }
 
+async function cerrarCuenta(req, res) {
+  const ahorro_id = v.idParametro(req.params.ahorro_id, 'ahorro', 'ahorro_id');
+  const resultado = await servicio.cerrarCuenta(req.auth.id, ahorro_id);
+  return ok(res, resultado, 'Cuenta de ahorro cerrada correctamente.');
+}
+
 function crearMovimiento(tipo, descripcionPorDefecto, mensaje) {
   return async (req, res) => {
     const ahorro_id = v.idParametro(req.params.ahorro_id, 'ahorro', 'ahorro_id');
@@ -65,4 +71,4 @@ async function transferir(req, res) {
   return creado(res, resultado, 'Transferencia realizada correctamente.');
 }
 
-module.exports = { crearCuenta, listarCuentas, obtenerCuenta, depositar, retirar, consultarMovimientos, transferir };
+module.exports = { crearCuenta, listarCuentas, obtenerCuenta, cerrarCuenta, depositar, retirar, consultarMovimientos, transferir };

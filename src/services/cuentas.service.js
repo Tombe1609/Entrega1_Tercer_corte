@@ -66,9 +66,44 @@ async function solicitar(body) {
 }
 
 async function listarSolicitudes() {
-  const items = await coleccion('solicitudes_cuenta').find({}, { projection: proyeccionSolicitud })
+  // La bandeja de trabajo solo incluye solicitudes pendientes; las decididas
+  // se conservan en MongoDB como historial y dejan de ofrecer acciones.
+  const items = await coleccion('solicitudes_cuenta').find({ estado: 'pendiente' }, { projection: proyeccionSolicitud })
     .sort({ fecha: -1 }).limit(100).toArray();
   return items.map(({ _id, ...datos }) => ({ id: _id.toHexString(), ...datos }));
+}
+
+async function editarSolicitud(id, body, actor) {
+  if (!/^[0-9a-f]{24}$/i.test(id)) throw new AppError(400, 'Identificador de solicitud inválido.');
+  const { nombre, telefono } = datosPersonales(body);
+  const email = correoInstitucional(body?.email);
+  const documento = texto(body?.documento);
+  if (!/^\\d{5,15}$/.test(documento)) throw new AppError(400, 'El documento debe tener entre 5 y 15 dígitos.');
+
+  const solicitudes = coleccion('solicitudes_cuenta');
+  const actual = await solicitudes.findOne({ _id: new ObjectId(id), estado: 'pendiente' });
+  if (!actual) throw new AppError(409, 'La solicitud ya fue atendida o no existe.');
+  await comprobarDisponibilidad(email, documento);
+  const duplicada = await solicitudes.findOne({
+    _id: { $ne: actual._id }, estado: 'pendiente', $or: [{ email }, { documento }],
+  }, { projection: { _id: 1 } });
+  if (duplicada) throw new AppError(409, 'Otra solicitud pendiente ya usa ese correo o documento.');
+
+  const cambios = {};
+  for (const [campo, valor] of Object.entries({ nombre, telefono, email, documento })) {
+    if (actual[campo] !== valor) cambios[campo] = valor;
+  }
+  if (!Object.keys(cambios).length) return { id, actualizada: false };
+  const historial = {
+    fecha: new Date(), actor_id: actor.id,
+    cambios: Object.fromEntries(Object.entries(cambios).map(([campo, nuevo]) => [campo, { anterior: actual[campo], nuevo }])),
+  };
+  const resultado = await solicitudes.updateOne(
+    { _id: actual._id, estado: 'pendiente' },
+    { $set: cambios, $push: { historial_ediciones: historial } },
+  );
+  if (resultado.matchedCount !== 1) throw new AppError(409, 'La solicitud cambió. Actualiza la pantalla e inténtalo de nuevo.');
+  return { id, actualizada: true };
 }
 
 async function auditar({ actor, usuario, accion, campos = [], cambios = [], session }) {
@@ -149,4 +184,4 @@ async function editarPerfil(body, actor) {
   });
 }
 
-module.exports = { indicesCuentas, solicitar, listarSolicitudes, decidirSolicitud, editarPerfil, auditar };
+module.exports = { indicesCuentas, solicitar, listarSolicitudes, editarSolicitud, decidirSolicitud, editarPerfil, auditar };

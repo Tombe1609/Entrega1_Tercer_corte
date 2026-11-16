@@ -69,7 +69,7 @@ npm run seed:login-demo
 npm start
 ```
 
-Define `DEMO_LOGIN_PASSWORD` localmente (mínimo 12 caracteres) antes de ejecutar `npm run seed:login-demo`; el script no incluye una contraseña fija. En Postman, configura la variable `demoLoginPassword` con el mismo valor. Por ejemplo, el rector de demostración inicia con `rector@universidad.edu.co`. Es solo para desarrollo local y no debe usarse en despliegue. El seed es idempotente, pero las historias de creación pueden dar 409 si ya fueron ejecutadas; conserva la base o usa otra base aparte para repetir desde cero.
+Define `DEMO_LOGIN_PASSWORD` localmente (mínimo 12 caracteres) antes de ejecutar `npm run seed:login-demo`; el script no incluye una contraseña fija. En Postman, configura la variable `demoLoginPassword` con el mismo valor. Por ejemplo, el rector de demostración inicia con `rector@uniautonoma.edu.co`. Es solo para desarrollo local y no debe usarse en despliegue. El seed es idempotente, pero las historias de creación pueden dar 409 si ya fueron ejecutadas; conserva la base o usa otra base aparte para repetir desde cero.
 
 Verifica `GET /api/health`, importa la colección de Postman y realiza las historias en el orden indicado en [`historias-usuario.md`](historias-usuario.md).
 

@@ -35,6 +35,45 @@ async function obtenerCuenta(ahorro_id) {
   return cuenta;
 }
 
+/** El estudiante puede cerrar su ahorro solo sin saldo ni obligaciones pendientes. */
+async function cerrarCuenta(usuario_id, ahorro_id) {
+  const ahorros = coleccion('ahorros');
+  const prestamos = coleccion('prestamos');
+  return ejecutarAtomico(async ({ session, alDeshacer }) => {
+    const cuenta = await ahorros.findOne({ ahorro_id, usuario_id }, { session, ...SIN_ID });
+    if (!cuenta) throw new AppError(404, 'No se encontró una cuenta de ahorro propia.');
+    if (cuenta.estado !== 'activo') throw new AppError(409, 'La cuenta de ahorro ya está cerrada.');
+    if (Number(cuenta.saldo) !== 0) {
+      throw new AppError(409, 'Retira el saldo disponible antes de cerrar la cuenta. El saldo debe quedar en $0.');
+    }
+    const deuda = await prestamos.findOne({
+      usuario_id,
+      $or: [
+        { estado: { $in: ['pendiente', 'activo'] } },
+        { capital_pendiente: { $gt: 0 } },
+        { interes_pendiente: { $gt: 0 } },
+      ],
+    }, { session, projection: { _id: 0, prestamo_id: 1, estado: 1 } });
+    if (deuda) throw new AppError(409, `No puedes cerrar la cuenta mientras tengas el préstamo ${deuda.prestamo_id} pendiente o con saldo por pagar.`);
+
+    const fecha_cierre = new Date();
+    const cambio = await ahorros.updateOne(
+      { ahorro_id, usuario_id, estado: 'activo', saldo: 0 },
+      { $set: { estado: 'cerrada', fecha_cierre } },
+      { session },
+    );
+    confirmarEscritura(cambio);
+    if (cambio.matchedCount !== 1) throw new AppError(409, 'La cuenta cambió durante el cierre. Actualiza e inténtalo de nuevo.');
+    alDeshacer(() => ahorros.updateOne({ ahorro_id, usuario_id, estado: 'cerrada', fecha_cierre }, { $set: { estado: 'activo' }, $unset: { fecha_cierre: '' } }));
+    await coleccion('auditoria_cuentas').insertOne({
+      fecha: fecha_cierre, actor_id: usuario_id, actor_rol: 'estudiante', usuario_id,
+      accion: 'cuenta_ahorro_cerrada', campos: ['estado'],
+      cambios: [{ campo: 'estado', anterior: 'activo', nuevo: 'cerrada' }],
+    }, { session });
+    return { ahorro_id, estado: 'cerrada', fecha_cierre };
+  });
+}
+
 /**
  * HU4: registra un depósito o un retiro. Actualiza el saldo y guarda el
  * movimiento en el historial como una sola operación atómica.
@@ -116,4 +155,4 @@ async function consultarMovimientos(ahorro_id, { tipo } = {}) {
   return { cuenta, cantidad: lista.length, movimientos: lista };
 }
 
-module.exports = { crearCuenta, listarCuentas, obtenerCuenta, registrarMovimiento, transferir, consultarMovimientos };
+module.exports = { crearCuenta, listarCuentas, obtenerCuenta, cerrarCuenta, registrarMovimiento, transferir, consultarMovimientos };

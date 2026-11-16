@@ -21,7 +21,7 @@ response:
               "nombre": "Juan Carlos Muñoz",
               "documento": "1001001001",
               "telefono": "3001111001",
-              "email": "juan.munoz@universidad.edu.co",
+              "email": "juan.munoz@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -30,7 +30,7 @@ response:
               "nombre": "María Fernanda López",
               "documento": "1001001002",
               "telefono": "3001111002",
-              "email": "maria.lopez@universidad.edu.co",
+              "email": "maria.lopez@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -39,7 +39,7 @@ response:
               "nombre": "Carlos Andrés Gómez",
               "documento": "1001001003",
               "telefono": "3001111003",
-              "email": "carlos.gomez@universidad.edu.co",
+              "email": "carlos.gomez@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -48,7 +48,7 @@ response:
               "nombre": "Laura Daniela Rodríguez",
               "documento": "1001001004",
               "telefono": "3001111004",
-              "email": "laura.rodriguez@universidad.edu.co",
+              "email": "laura.rodriguez@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -57,7 +57,7 @@ response:
               "nombre": "Andrés Felipe Torres",
               "documento": "1001001005",
               "telefono": "3001111005",
-              "email": "andres.torres@universidad.edu.co",
+              "email": "andres.torres@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -66,7 +66,7 @@ response:
               "nombre": "Sofía Valentina Herrera",
               "documento": "1001001006",
               "telefono": "3001111006",
-              "email": "sofia.herrera@universidad.edu.co",
+              "email": "sofia.herrera@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -75,7 +75,7 @@ response:
               "nombre": "Mateo Sebastián Castro",
               "documento": "1001001007",
               "telefono": "3001111007",
-              "email": "mateo.castro@universidad.edu.co",
+              "email": "mateo.castro@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -84,7 +84,7 @@ response:
               "nombre": "Valentina Isabel Pérez",
               "documento": "1001001008",
               "telefono": "3001111008",
-              "email": "valentina.perez@universidad.edu.co",
+              "email": "valentina.perez@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -93,7 +93,7 @@ response:
               "nombre": "Sebastián David Moreno",
               "documento": "1001001009",
               "telefono": "3001111009",
-              "email": "sebastian.moreno@universidad.edu.co",
+              "email": "sebastian.moreno@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -102,7 +102,7 @@ response:
               "nombre": "Natalia Alejandra Vargas",
               "documento": "1001001010",
               "telefono": "3001111010",
-              "email": "natalia.vargas@universidad.edu.co",
+              "email": "natalia.vargas@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             },
@@ -111,7 +111,7 @@ response:
               "nombre": "Daniel Esteban Molina",
               "documento": "1001001012",
               "telefono": "3001111012",
-              "email": "daniel.molina@universidad.edu.co",
+              "email": "daniel.molina@uniautonoma.edu.co",
               "tipo": "estudiante",
               "estado": "activo"
             }

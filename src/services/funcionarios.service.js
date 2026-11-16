@@ -20,6 +20,9 @@ const ESTADOS_PERMITIDOS = ['activo', 'inactivo'];
 
 /** HU2: el rector registra un funcionario con su cargo. */
 async function registrar({ nombre, cargo, telefono, email, estado }) {
+  if (!/@uniautonoma\.edu\.co$/.test(String(email).toLowerCase())) {
+    throw new AppError(400, 'Los funcionarios deben usar su correo @uniautonoma.edu.co.');
+  }
   const funcionarios = coleccion('funcionarios');
 
   const duplicado = await funcionarios.findOne({ email }, SIN_ID);

@@ -157,6 +157,8 @@ private fun WarningBoxRow(label: String, fecha: String, valor: String, onClick: 
 @Composable
 fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
     val st by vm.student.collectAsState()
+    val busy by vm.busy.collectAsState()
+    var confirmarCierre by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { vm.cargarEstudiante() }
 
     ScreenScaffold(
@@ -173,8 +175,26 @@ fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
         },
     ) {
         StateContent(st, onRetry = { vm.cargarEstudiante() }) { d ->
-            PrimaryButton("Realizar depósito") { nav.navigate("depositar") }
-            SecondaryButton("Solicitar retiro") { nav.navigate("retirar") }
+            if (d.cuenta.estado == "activo") {
+                PrimaryButton("Realizar depósito") { nav.navigate("depositar") }
+                SecondaryButton("Solicitar retiro") { nav.navigate("retirar") }
+                val deudaVigente = d.prestamos.prestamos.any {
+                    it.estado in setOf("pendiente", "activo") || it.capitalPendiente > 0 || it.interesPendiente > 0
+                }
+                InfoBox {
+                    Text(
+                        if (deudaVigente) "Para cerrar, primero cancela tus préstamos pendientes y deja el saldo de ahorro en \$0."
+                        else if (d.cuenta.saldo != 0.0) "Para cerrar, retira los ${Fmt.money(d.cuenta.saldo)} disponibles y deja el saldo en \$0."
+                        else "Tu cuenta puede cerrarse: no tiene saldo disponible ni préstamos pendientes.",
+                        color = Muted,
+                    )
+                }
+                PrimaryButton("Cerrar cuenta de ahorro", enabled = !busy && !deudaVigente && d.cuenta.saldo == 0.0) {
+                    confirmarCierre = true
+                }
+            } else {
+                InfoBox { Text("Esta cuenta de ahorro está cerrada. Puedes consultar el historial, pero no hacer movimientos.", color = Muted) }
+            }
             Text("Historial", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
             AppCard {
                 val ordenados = d.movimientos.sortedByDescending { Fmt.parse(it.fecha) ?: java.time.Instant.EPOCH }
@@ -196,6 +216,19 @@ fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
             }
         }
     }
+    if (confirmarCierre) AlertDialog(
+        onDismissRequest = { if (!busy) confirmarCierre = false },
+        title = { Text("Cerrar cuenta de ahorro") },
+        text = { Text("La cuenta quedará cerrada y conservará su historial. Para volver a usar la cooperativa tendrás que solicitar ayuda a un funcionario.") },
+        confirmButton = { TextButton(enabled = !busy, onClick = {
+            val id = (st as? UiState.Success)?.data?.cuenta?.ahorroId ?: return@TextButton
+            vm.cerrarCuentaAhorro(id) {
+                confirmarCierre = false
+                nav.navigate("login") { popUpTo(nav.graph.id) { inclusive = true } }
+            }
+        }) { Text("Confirmar cierre") } },
+        dismissButton = { TextButton(enabled = !busy, onClick = { confirmarCierre = false }) { Text("Cancelar") } },
+    )
 }
 
 @Composable

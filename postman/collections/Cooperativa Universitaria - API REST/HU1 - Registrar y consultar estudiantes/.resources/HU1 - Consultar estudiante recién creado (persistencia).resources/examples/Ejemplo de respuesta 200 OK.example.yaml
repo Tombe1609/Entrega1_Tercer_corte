@@ -18,7 +18,7 @@ response:
           "nombre": "Daniel Esteban Molina",
           "documento": "1001001012",
           "telefono": "3001111012",
-          "email": "daniel.molina@universidad.edu.co",
+          "email": "daniel.molina@uniautonoma.edu.co",
           "tipo": "estudiante",
           "estado": "activo"
         }

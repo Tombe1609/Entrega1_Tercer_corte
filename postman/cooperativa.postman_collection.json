@@ -161,7 +161,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"carlos.gomez@universidad.edu.co\",\n  \"password\": \"{{demoLoginPassword}}\"\n}",
+              "raw": "{\n  \"email\": \"carlos.gomez@uniautonoma.edu.co\",\n  \"password\": \"{{demoLoginPassword}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -243,7 +243,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"rector@universidad.edu.co\",\n  \"password\": \"{{demoLoginPassword}}\"\n}",
+              "raw": "{\n  \"email\": \"rector@uniautonoma.edu.co\",\n  \"password\": \"{{demoLoginPassword}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -310,7 +310,7 @@
             "description": "**Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.\n\nCrea el estudiante U012 en la colección `usuarios`. Efecto: modifica datos; para repetirlo usa otra base desechable (ver README).\n\n**Código HTTP esperado:** 201",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@universidad.edu.co\"\n}",
+              "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@uniautonoma.edu.co\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -343,7 +343,7 @@
                 "description": "**Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.\n\nCrea el estudiante U012 en la colección `usuarios`. Efecto: modifica datos; para repetirlo usa otra base desechable (ver README).\n\n**Código HTTP esperado:** 201",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@universidad.edu.co\"\n}",
+                  "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@uniautonoma.edu.co\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -360,7 +360,7 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Estudiante registrado correctamente.\",\n  \"data\": {\n    \"usuario_id\": \"U012\",\n    \"nombre\": \"Daniel Esteban Molina\",\n    \"documento\": \"1001001012\",\n    \"telefono\": \"3001111012\",\n    \"email\": \"daniel.molina@universidad.edu.co\",\n    \"tipo\": \"estudiante\",\n    \"estado\": \"activo\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Estudiante registrado correctamente.\",\n  \"data\": {\n    \"usuario_id\": \"U012\",\n    \"nombre\": \"Daniel Esteban Molina\",\n    \"documento\": \"1001001012\",\n    \"telefono\": \"3001111012\",\n    \"email\": \"daniel.molina@uniautonoma.edu.co\",\n    \"tipo\": \"estudiante\",\n    \"estado\": \"activo\"\n  }\n}"
             }
           ]
         },
@@ -493,7 +493,7 @@
             "description": "**Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.\n\nMismo documento/correo que el estudiante recién creado: se rechaza.\n\n**Código HTTP esperado:** 409",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@universidad.edu.co\"\n}",
+              "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@uniautonoma.edu.co\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -526,7 +526,7 @@
                 "description": "**Historia de usuario 1:** Como administrador, quiero registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.\n\nMismo documento/correo que el estudiante recién creado: se rechaza.\n\n**Código HTTP esperado:** 409",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@universidad.edu.co\"\n}",
+                  "raw": "{\n  \"nombre\": \"Daniel Esteban Molina\",\n  \"documento\": \"1001001012\",\n  \"telefono\": \"3001111012\",\n  \"email\": \"daniel.molina@uniautonoma.edu.co\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -605,7 +605,7 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Estudiantes consultados correctamente.\",\n  \"data\": {\n    \"cantidad\": 11,\n    \"estudiantes\": [\n      {\n        \"usuario_id\": \"U001\",\n        \"nombre\": \"Juan Carlos Muñoz\",\n        \"documento\": \"1001001001\",\n        \"telefono\": \"3001111001\",\n        \"email\": \"juan.munoz@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U002\",\n        \"nombre\": \"María Fernanda López\",\n        \"documento\": \"1001001002\",\n        \"telefono\": \"3001111002\",\n        \"email\": \"maria.lopez@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U003\",\n        \"nombre\": \"Carlos Andrés Gómez\",\n        \"documento\": \"1001001003\",\n        \"telefono\": \"3001111003\",\n        \"email\": \"carlos.gomez@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U004\",\n        \"nombre\": \"Laura Daniela Rodríguez\",\n        \"documento\": \"1001001004\",\n        \"telefono\": \"3001111004\",\n        \"email\": \"laura.rodriguez@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U005\",\n        \"nombre\": \"Andrés Felipe Torres\",\n        \"documento\": \"1001001005\",\n        \"telefono\": \"3001111005\",\n        \"email\": \"andres.torres@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U006\",\n        \"nombre\": \"Sofía Valentina Herrera\",\n        \"documento\": \"1001001006\",\n        \"telefono\": \"3001111006\",\n        \"email\": \"sofia.herrera@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U007\",\n        \"nombre\": \"Mateo Sebastián Castro\",\n        \"documento\": \"1001001007\",\n        \"telefono\": \"3001111007\",\n        \"email\": \"mateo.castro@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U008\",\n        \"nombre\": \"Valentina Isabel Pérez\",\n        \"documento\": \"1001001008\",\n        \"telefono\": \"3001111008\",\n        \"email\": \"valentina.perez@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U009\",\n        \"nombre\": \"Sebastián David Moreno\",\n        \"documento\": \"1001001009\",\n        \"telefono\": \"3001111009\",\n        \"email\": \"sebastian.moreno@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U010\",\n        \"nombre\": \"Natalia Alejandra Vargas\",\n        \"documento\": \"1001001010\",\n        \"telefono\": \"3001111010\",\n        \"email\": \"natalia.vargas@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U012\",\n        \"nombre\": \"Daniel Esteban Molina\",\n        \"documento\": \"1001001012\",\n        \"telefono\": \"3001111012\",\n        \"email\": \"daniel.molina@universidad.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      }\n    ]\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Estudiantes consultados correctamente.\",\n  \"data\": {\n    \"cantidad\": 11,\n    \"estudiantes\": [\n      {\n        \"usuario_id\": \"U001\",\n        \"nombre\": \"Juan Carlos Muñoz\",\n        \"documento\": \"1001001001\",\n        \"telefono\": \"3001111001\",\n        \"email\": \"juan.munoz@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U002\",\n        \"nombre\": \"María Fernanda López\",\n        \"documento\": \"1001001002\",\n        \"telefono\": \"3001111002\",\n        \"email\": \"maria.lopez@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U003\",\n        \"nombre\": \"Carlos Andrés Gómez\",\n        \"documento\": \"1001001003\",\n        \"telefono\": \"3001111003\",\n        \"email\": \"carlos.gomez@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U004\",\n        \"nombre\": \"Laura Daniela Rodríguez\",\n        \"documento\": \"1001001004\",\n        \"telefono\": \"3001111004\",\n        \"email\": \"laura.rodriguez@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U005\",\n        \"nombre\": \"Andrés Felipe Torres\",\n        \"documento\": \"1001001005\",\n        \"telefono\": \"3001111005\",\n        \"email\": \"andres.torres@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U006\",\n        \"nombre\": \"Sofía Valentina Herrera\",\n        \"documento\": \"1001001006\",\n        \"telefono\": \"3001111006\",\n        \"email\": \"sofia.herrera@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U007\",\n        \"nombre\": \"Mateo Sebastián Castro\",\n        \"documento\": \"1001001007\",\n        \"telefono\": \"3001111007\",\n        \"email\": \"mateo.castro@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U008\",\n        \"nombre\": \"Valentina Isabel Pérez\",\n        \"documento\": \"1001001008\",\n        \"telefono\": \"3001111008\",\n        \"email\": \"valentina.perez@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U009\",\n        \"nombre\": \"Sebastián David Moreno\",\n        \"documento\": \"1001001009\",\n        \"telefono\": \"3001111009\",\n        \"email\": \"sebastian.moreno@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U010\",\n        \"nombre\": \"Natalia Alejandra Vargas\",\n        \"documento\": \"1001001010\",\n        \"telefono\": \"3001111010\",\n        \"email\": \"natalia.vargas@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"usuario_id\": \"U012\",\n        \"nombre\": \"Daniel Esteban Molina\",\n        \"documento\": \"1001001012\",\n        \"telefono\": \"3001111012\",\n        \"email\": \"daniel.molina@uniautonoma.edu.co\",\n        \"tipo\": \"estudiante\",\n        \"estado\": \"activo\"\n      }\n    ]\n  }\n}"
             }
           ]
         },
@@ -669,7 +669,7 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Estudiante consultado correctamente.\",\n  \"data\": {\n    \"usuario_id\": \"U012\",\n    \"nombre\": \"Daniel Esteban Molina\",\n    \"documento\": \"1001001012\",\n    \"telefono\": \"3001111012\",\n    \"email\": \"daniel.molina@universidad.edu.co\",\n    \"tipo\": \"estudiante\",\n    \"estado\": \"activo\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Estudiante consultado correctamente.\",\n  \"data\": {\n    \"usuario_id\": \"U012\",\n    \"nombre\": \"Daniel Esteban Molina\",\n    \"documento\": \"1001001012\",\n    \"telefono\": \"3001111012\",\n    \"email\": \"daniel.molina@uniautonoma.edu.co\",\n    \"tipo\": \"estudiante\",\n    \"estado\": \"activo\"\n  }\n}"
             }
           ]
         },
@@ -782,7 +782,7 @@
             "description": "**Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.\n\nCrea el funcionario F006 (estado \"activo\" por defecto).\n\n**Código HTTP esperado:** 201",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Natalia Marcela Gómez\",\n  \"cargo\": \"Coordinador de cartera\",\n  \"telefono\": \"3102001006\",\n  \"email\": \"natalia.gomez@universidad.edu.co\"\n}",
+              "raw": "{\n  \"nombre\": \"Natalia Marcela Gómez\",\n  \"cargo\": \"Coordinador de cartera\",\n  \"telefono\": \"3102001006\",\n  \"email\": \"natalia.gomez@uniautonoma.edu.co\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -815,7 +815,7 @@
                 "description": "**Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.\n\nCrea el funcionario F006 (estado \"activo\" por defecto).\n\n**Código HTTP esperado:** 201",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombre\": \"Natalia Marcela Gómez\",\n  \"cargo\": \"Coordinador de cartera\",\n  \"telefono\": \"3102001006\",\n  \"email\": \"natalia.gomez@universidad.edu.co\"\n}",
+                  "raw": "{\n  \"nombre\": \"Natalia Marcela Gómez\",\n  \"cargo\": \"Coordinador de cartera\",\n  \"telefono\": \"3102001006\",\n  \"email\": \"natalia.gomez@uniautonoma.edu.co\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -832,7 +832,7 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Funcionario registrado correctamente.\",\n  \"data\": {\n    \"funcionario_id\": \"F006\",\n    \"nombre\": \"Natalia Marcela Gómez\",\n    \"cargo\": \"Coordinador de cartera\",\n    \"telefono\": \"3102001006\",\n    \"email\": \"natalia.gomez@universidad.edu.co\",\n    \"estado\": \"activo\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Funcionario registrado correctamente.\",\n  \"data\": {\n    \"funcionario_id\": \"F006\",\n    \"nombre\": \"Natalia Marcela Gómez\",\n    \"cargo\": \"Coordinador de cartera\",\n    \"telefono\": \"3102001006\",\n    \"email\": \"natalia.gomez@uniautonoma.edu.co\",\n    \"estado\": \"activo\"\n  }\n}"
             }
           ]
         },
@@ -873,7 +873,7 @@
             "description": "**Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.\n\nEl cargo \"Portero\" no está en la lista permitida.\n\n**Código HTTP esperado:** 400",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Pedro Pérez\",\n  \"cargo\": \"Portero\",\n  \"telefono\": \"3102001007\",\n  \"email\": \"pedro.perez@universidad.edu.co\"\n}",
+              "raw": "{\n  \"nombre\": \"Pedro Pérez\",\n  \"cargo\": \"Portero\",\n  \"telefono\": \"3102001007\",\n  \"email\": \"pedro.perez@uniautonoma.edu.co\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -906,7 +906,7 @@
                 "description": "**Historia de usuario 2:** Como Rector, quiero registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.\n\nEl cargo \"Portero\" no está en la lista permitida.\n\n**Código HTTP esperado:** 400",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"nombre\": \"Pedro Pérez\",\n  \"cargo\": \"Portero\",\n  \"telefono\": \"3102001007\",\n  \"email\": \"pedro.perez@universidad.edu.co\"\n}",
+                  "raw": "{\n  \"nombre\": \"Pedro Pérez\",\n  \"cargo\": \"Portero\",\n  \"telefono\": \"3102001007\",\n  \"email\": \"pedro.perez@uniautonoma.edu.co\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -985,7 +985,7 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Funcionarios consultados correctamente.\",\n  \"data\": {\n    \"cantidad\": 6,\n    \"funcionarios\": [\n      {\n        \"funcionario_id\": \"F001\",\n        \"nombre\": \"Diana Marcela Rojas\",\n        \"cargo\": \"Director financiero\",\n        \"telefono\": \"3102001001\",\n        \"email\": \"diana.rojas@universidad.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F002\",\n        \"nombre\": \"Jorge Enrique Martínez\",\n        \"cargo\": \"Asesor de créditos\",\n        \"telefono\": \"3102001002\",\n        \"email\": \"jorge.martinez@universidad.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F003\",\n        \"nombre\": \"Paola Andrea Castillo\",\n        \"cargo\": \"Tesorero\",\n        \"telefono\": \"3102001003\",\n        \"email\": \"paola.castillo@universidad.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F004\",\n        \"nombre\": \"Miguel Ángel Ramírez\",\n        \"cargo\": \"Auxiliar administrativo\",\n        \"telefono\": \"3102001004\",\n        \"email\": \"miguel.ramirez@universidad.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F005\",\n        \"nombre\": \"Camila Andrea Suárez\",\n        \"cargo\": \"Analista financiero\",\n        \"telefono\": \"3102001005\",\n        \"email\": \"camila.suarez@universidad.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F006\",\n        \"nombre\": \"Natalia Marcela Gómez\",\n        \"cargo\": \"Coordinador de cartera\",\n        \"telefono\": \"3102001006\",\n        \"email\": \"natalia.gomez@universidad.edu.co\",\n        \"estado\": \"activo\"\n      }\n    ]\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Funcionarios consultados correctamente.\",\n  \"data\": {\n    \"cantidad\": 6,\n    \"funcionarios\": [\n      {\n        \"funcionario_id\": \"F001\",\n        \"nombre\": \"Diana Marcela Rojas\",\n        \"cargo\": \"Director financiero\",\n        \"telefono\": \"3102001001\",\n        \"email\": \"diana.rojas@uniautonoma.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F002\",\n        \"nombre\": \"Jorge Enrique Martínez\",\n        \"cargo\": \"Asesor de créditos\",\n        \"telefono\": \"3102001002\",\n        \"email\": \"jorge.martinez@uniautonoma.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F003\",\n        \"nombre\": \"Paola Andrea Castillo\",\n        \"cargo\": \"Tesorero\",\n        \"telefono\": \"3102001003\",\n        \"email\": \"paola.castillo@uniautonoma.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F004\",\n        \"nombre\": \"Miguel Ángel Ramírez\",\n        \"cargo\": \"Auxiliar administrativo\",\n        \"telefono\": \"3102001004\",\n        \"email\": \"miguel.ramirez@uniautonoma.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F005\",\n        \"nombre\": \"Camila Andrea Suárez\",\n        \"cargo\": \"Analista financiero\",\n        \"telefono\": \"3102001005\",\n        \"email\": \"camila.suarez@uniautonoma.edu.co\",\n        \"estado\": \"activo\"\n      },\n      {\n        \"funcionario_id\": \"F006\",\n        \"nombre\": \"Natalia Marcela Gómez\",\n        \"cargo\": \"Coordinador de cartera\",\n        \"telefono\": \"3102001006\",\n        \"email\": \"natalia.gomez@uniautonoma.edu.co\",\n        \"estado\": \"activo\"\n      }\n    ]\n  }\n}"
             }
           ]
         },
@@ -1049,7 +1049,7 @@
                   "value": "application/json; charset=utf-8"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Funcionario consultado correctamente.\",\n  \"data\": {\n    \"funcionario_id\": \"F006\",\n    \"nombre\": \"Natalia Marcela Gómez\",\n    \"cargo\": \"Coordinador de cartera\",\n    \"telefono\": \"3102001006\",\n    \"email\": \"natalia.gomez@universidad.edu.co\",\n    \"estado\": \"activo\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Funcionario consultado correctamente.\",\n  \"data\": {\n    \"funcionario_id\": \"F006\",\n    \"nombre\": \"Natalia Marcela Gómez\",\n    \"cargo\": \"Coordinador de cartera\",\n    \"telefono\": \"3102001006\",\n    \"email\": \"natalia.gomez@uniautonoma.edu.co\",\n    \"estado\": \"activo\"\n  }\n}"
             }
           ]
         },

@@ -44,6 +44,7 @@ class Repository(private val client: ApiClient) {
     suspend fun login(email: String, password: String) = call { api.login(LoginRequest(email.trim(), password)) }
     suspend fun solicitarCuenta(body: SolicitudCuentaRequest) = call { api.solicitarCuenta(body) }
     suspend fun solicitudesCuenta() = call { api.solicitudesCuenta() }.solicitudes
+    suspend fun editarSolicitud(id: String, body: EditarSolicitudRequest) = call { api.editarSolicitudCuenta(id, body) }
     suspend fun decidirSolicitud(id: String, aprobar: Boolean, motivo: String = "") = call {
         api.decidirSolicitudCuenta(id, DecisionSolicitudRequest(if (aprobar) "aprobada" else "rechazada", motivo))
     }
@@ -54,12 +55,14 @@ class Repository(private val client: ApiClient) {
         if (!resultado.actualizada) throw ApiException("No se confirmó el cambio de contraseña.")
     }
     suspend fun crearCuentaAcceso(body: CrearCuentaAccesoRequest) = call { api.crearCuentaAcceso(body) }
+    suspend fun cambiarEstadoEstudiante(id: String, estado: String) = call { api.cambiarEstadoEstudiante(id, EstadoCuentaRequest(estado)) }
 
     suspend fun estudiantes() = call { api.estudiantes() }.estudiantes
     suspend fun funcionarios() = call { api.funcionarios() }.funcionarios
 
     suspend fun cuentas() = call { api.cuentas() }.cuentas
     suspend fun crearCuenta(usuarioId: String) = call { api.crearCuenta(CrearCuentaRequest(usuarioId)) }
+    suspend fun cerrarCuenta(id: String) = call { api.cerrarCuenta(id) }
     suspend fun cuenta(id: String) = call { api.cuenta(id) }
     suspend fun movimientos(id: String) = call { api.movimientos(id) }.movimientos
     suspend fun depositar(id: String, valor: Double, desc: String) = call { api.depositar(id, MovimientoRequest(valor, desc)) }

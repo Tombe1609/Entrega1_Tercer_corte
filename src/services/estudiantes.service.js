@@ -9,6 +9,9 @@ const DATOS_PUBLICOS = { projection: {
 
 /** HU1: registra un estudiante (el identificador U### se genera automáticamente). */
 async function registrar({ nombre, documento, telefono, email }) {
+  if (!/@uniautonoma\.edu\.co$/.test(String(email).toLowerCase())) {
+    throw new AppError(400, 'Los estudiantes deben usar su correo @uniautonoma.edu.co.');
+  }
   const usuarios = coleccion('usuarios');
 
   const duplicado = await usuarios.findOne({ $or: [{ documento }, { email }] }, DATOS_PUBLICOS);

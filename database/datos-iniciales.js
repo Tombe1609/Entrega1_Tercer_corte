@@ -41,7 +41,7 @@ module.exports =
       nombre: "Juan Carlos Muñoz",
       documento: "1001001001",
       telefono: "3001111001",
-      email: "juan.munoz@universidad.edu.co",
+      email: "juan.munoz@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -50,7 +50,7 @@ module.exports =
       nombre: "María Fernanda López",
       documento: "1001001002",
       telefono: "3001111002",
-      email: "maria.lopez@universidad.edu.co",
+      email: "maria.lopez@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -59,7 +59,7 @@ module.exports =
       nombre: "Carlos Andrés Gómez",
       documento: "1001001003",
       telefono: "3001111003",
-      email: "carlos.gomez@universidad.edu.co",
+      email: "carlos.gomez@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -68,7 +68,7 @@ module.exports =
       nombre: "Laura Daniela Rodríguez",
       documento: "1001001004",
       telefono: "3001111004",
-      email: "laura.rodriguez@universidad.edu.co",
+      email: "laura.rodriguez@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -77,7 +77,7 @@ module.exports =
       nombre: "Andrés Felipe Torres",
       documento: "1001001005",
       telefono: "3001111005",
-      email: "andres.torres@universidad.edu.co",
+      email: "andres.torres@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -86,7 +86,7 @@ module.exports =
       nombre: "Sofía Valentina Herrera",
       documento: "1001001006",
       telefono: "3001111006",
-      email: "sofia.herrera@universidad.edu.co",
+      email: "sofia.herrera@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -95,7 +95,7 @@ module.exports =
       nombre: "Mateo Sebastián Castro",
       documento: "1001001007",
       telefono: "3001111007",
-      email: "mateo.castro@universidad.edu.co",
+      email: "mateo.castro@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -104,7 +104,7 @@ module.exports =
       nombre: "Valentina Isabel Pérez",
       documento: "1001001008",
       telefono: "3001111008",
-      email: "valentina.perez@universidad.edu.co",
+      email: "valentina.perez@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -113,7 +113,7 @@ module.exports =
       nombre: "Sebastián David Moreno",
       documento: "1001001009",
       telefono: "3001111009",
-      email: "sebastian.moreno@universidad.edu.co",
+      email: "sebastian.moreno@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -122,7 +122,7 @@ module.exports =
       nombre: "Natalia Alejandra Vargas",
       documento: "1001001010",
       telefono: "3001111010",
-      email: "natalia.vargas@universidad.edu.co",
+      email: "natalia.vargas@uniautonoma.edu.co",
       tipo: "estudiante",
       estado: "activo"
     },
@@ -131,7 +131,7 @@ module.exports =
       nombre: "Ricardo Alberto Sánchez",
       documento: "1001001011",
       telefono: "3001111011",
-      email: "rector@universidad.edu.co",
+      email: "rector@uniautonoma.edu.co",
       tipo: "rector",
       estado: "activo"
     }
@@ -142,7 +142,7 @@ module.exports =
       nombre: "Diana Marcela Rojas",
       cargo: "Director financiero",
       telefono: "3102001001",
-      email: "diana.rojas@universidad.edu.co",
+      email: "diana.rojas@uniautonoma.edu.co",
       estado: "activo"
     },
     {
@@ -150,7 +150,7 @@ module.exports =
       nombre: "Jorge Enrique Martínez",
       cargo: "Asesor de créditos",
       telefono: "3102001002",
-      email: "jorge.martinez@universidad.edu.co",
+      email: "jorge.martinez@uniautonoma.edu.co",
       estado: "activo"
     },
     {
@@ -158,7 +158,7 @@ module.exports =
       nombre: "Paola Andrea Castillo",
       cargo: "Tesorero",
       telefono: "3102001003",
-      email: "paola.castillo@universidad.edu.co",
+      email: "paola.castillo@uniautonoma.edu.co",
       estado: "activo"
     },
     {
@@ -166,7 +166,7 @@ module.exports =
       nombre: "Miguel Ángel Ramírez",
       cargo: "Auxiliar administrativo",
       telefono: "3102001004",
-      email: "miguel.ramirez@universidad.edu.co",
+      email: "miguel.ramirez@uniautonoma.edu.co",
       estado: "activo"
     },
     {
@@ -174,7 +174,7 @@ module.exports =
       nombre: "Camila Andrea Suárez",
       cargo: "Analista financiero",
       telefono: "3102001005",
-      email: "camila.suarez@universidad.edu.co",
+      email: "camila.suarez@uniautonoma.edu.co",
       estado: "activo"
     }
   ],

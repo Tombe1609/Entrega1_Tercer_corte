@@ -23,6 +23,7 @@ import com.cooperativa.app.data.Repository
 import com.cooperativa.app.data.Session
 import com.cooperativa.app.data.SolicitudCuenta
 import com.cooperativa.app.data.SolicitudCuentaRequest
+import com.cooperativa.app.data.EditarSolicitudRequest
 import com.cooperativa.app.data.PerfilRequest
 import com.cooperativa.app.data.AuditoriaCuenta
 import com.cooperativa.app.data.Usuario
@@ -244,11 +245,29 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             _solicitudes.value = UiState.Success(repo.solicitudesCuenta())
         }
 
+    fun editarSolicitud(id: String, nombre: String, documento: String, telefono: String, email: String, onDone: () -> Unit = {}) =
+        act("Datos de la solicitud actualizados.", onDone) {
+            repo.editarSolicitud(id, EditarSolicitudRequest(nombre.trim(), documento.trim(), telefono.trim(), email.trim()))
+            _solicitudes.value = UiState.Success(repo.solicitudesCuenta())
+        }
+
+    fun cambiarEstadoEstudiante(usuarioId: String, estado: String, onDone: () -> Unit = {}) =
+        act(if (estado == "activo") "Cuenta de estudiante reactivada." else "Cuenta de estudiante desactivada.", onDone) {
+            repo.cambiarEstadoEstudiante(usuarioId, estado)
+            cargarAdmin()
+        }
+
     fun logout() {
         guardarSesion(null)
         _student.value = UiState.Loading
         _admin.value = UiState.Loading
     }
+
+    fun cerrarCuentaAhorro(ahorroId: String, onDone: () -> Unit = {}) =
+        act("Cuenta de ahorro cerrada. Tu sesión se cerrará por seguridad.", onDone) {
+            repo.cerrarCuenta(ahorroId)
+            logout()
+        }
 
     // ---------- Estudiante ----------
     private val _student = MutableStateFlow<UiState<StudentData>>(UiState.Loading)

@@ -145,6 +145,11 @@ fun SolicitudesCuentaScreen(vm: MainViewModel, nav: NavController) {
     val solicitudes by vm.solicitudes.collectAsState()
     val busy by vm.busy.collectAsState()
     var rechazo by remember { mutableStateOf<com.cooperativa.app.data.SolicitudCuenta?>(null) }
+    var editando by remember { mutableStateOf<com.cooperativa.app.data.SolicitudCuenta?>(null) }
+    var editNombre by remember { mutableStateOf("") }
+    var editDocumento by remember { mutableStateOf("") }
+    var editTelefono by remember { mutableStateOf("") }
+    var editEmail by remember { mutableStateOf("") }
     var motivo by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { vm.cargarSolicitudes() }
     ScreenScaffold("Solicitudes de cuenta", "Miguel revisa y decide cada solicitud", onBack = { nav.popBackStack() }) {
@@ -157,12 +162,36 @@ fun SolicitudesCuentaScreen(vm: MainViewModel, nav: NavController) {
                     Text("Correo: ${s.email}", color = Muted)
                     Text("Teléfono: ${s.telefono}", color = Muted)
                     Text("Recibida: ${Fmt.fechaHora(s.fecha)}", color = Muted, fontSize = 12.sp)
+                    SecondaryButton("Editar datos") {
+                        editando = s
+                        editNombre = s.nombre
+                        editDocumento = s.documento
+                        editTelefono = s.telefono
+                        editEmail = s.email
+                        vm.limpiarError()
+                    }
                     PrimaryButton("Aprobar", loading = busy) { vm.decidirSolicitud(s.id, true) { vm.cargarSolicitudes() } }
                     SecondaryButton("Rechazar") { rechazo = s; motivo = "" }
                 }
             }
         }
     }
+    editando?.let { s -> AlertDialog(
+        onDismissRequest = { if (!busy) editando = null },
+        title = { Text("Editar solicitud") },
+        text = { Column {
+            Text("Corrige los datos antes de crear la cuenta.", color = Muted)
+            AppTextField("Nombre completo", editNombre, { editNombre = it })
+            AppTextField("Documento", editDocumento, { editDocumento = it.filter(Char::isDigit) }, keyboard = KeyboardType.Number)
+            AppTextField("Teléfono", editTelefono, { editTelefono = it.filter(Char::isDigit) }, keyboard = KeyboardType.Phone)
+            AppTextField("Correo institucional", editEmail, { editEmail = it }, keyboard = KeyboardType.Email)
+            ErrorText(vm.formError.collectAsState().value)
+        } },
+        confirmButton = { TextButton(enabled = !busy && editNombre.length >= 3 && editDocumento.length in 5..15 && editTelefono.length in 7..15 && editEmail.lowercase().endsWith("@uniautonoma.edu.co"), onClick = {
+            vm.editarSolicitud(s.id, editNombre, editDocumento, editTelefono, editEmail) { editando = null; vm.cargarSolicitudes() }
+        }) { Text("Guardar cambios") } },
+        dismissButton = { TextButton(onClick = { editando = null }) { Text("Cancelar") } },
+    ) }
     rechazo?.let { s -> AlertDialog(
         onDismissRequest = { if (!busy) rechazo = null },
         title = { Text("Rechazar solicitud") },
@@ -202,6 +231,7 @@ fun AdminUsuariosScreen(vm: MainViewModel, nav: NavController) {
     LaunchedEffect(Unit) { vm.cargarAdmin() }
     var busqueda by remember { mutableStateOf("") }
     var seleccionado by remember { mutableStateOf<String?>(null) }
+    var cambioEstado by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     ScreenScaffold("Gestionar usuarios", onBack = { nav.popBackStack() }) {
         AppTextField("Buscar usuario", busqueda, { busqueda = it }, placeholder = "Nombre o documento")
@@ -229,6 +259,11 @@ fun AdminUsuariosScreen(vm: MainViewModel, nav: NavController) {
                         RowLine("Saldo de ahorro", saldo?.let { Fmt.money(it) } ?: "Sin cuenta")
                         val pres = d.prestamos.filter { it.prestamo.prestamoId.isNotBlank() && it.usuarioId == u.usuarioId }
                         if (d.prestamos.isNotEmpty()) RowLine("Préstamos", "${pres.size}")
+                        if (session?.rol == "rector") {
+                            SecondaryButton(if (u.estado == "activo") "Desactivar cuenta" else "Reactivar cuenta") {
+                                cambioEstado = u.usuarioId to if (u.estado == "activo") "inactivo" else "activo"
+                            }
+                        }
                     }
                 }
             }
@@ -237,6 +272,13 @@ fun AdminUsuariosScreen(vm: MainViewModel, nav: NavController) {
             PrimaryButton("Crear cuenta de acceso") { nav.navigate("a_cuentas_acceso") }
         }
     }
+    cambioEstado?.let { (id, estado) -> AlertDialog(
+        onDismissRequest = { cambioEstado = null },
+        title = { Text(if (estado == "activo") "Reactivar cuenta" else "Desactivar cuenta") },
+        text = { Text(if (estado == "activo") "El estudiante podrá volver a iniciar sesión." else "Se bloqueará el inicio de sesión. Solo se permite si no hay saldo ni préstamos pendientes.") },
+        confirmButton = { TextButton(onClick = { vm.cambiarEstadoEstudiante(id, estado) { cambioEstado = null } }) { Text("Confirmar") } },
+        dismissButton = { TextButton(onClick = { cambioEstado = null }) { Text("Cancelar") } },
+    ) }
 }
 
 // =====================================================================
@@ -300,7 +342,7 @@ fun GestionCuentasAccesoScreen(vm: MainViewModel, nav: NavController) {
                 DropdownField("Área y permisos", area.replaceFirstChar { it.uppercase() }, areas.map { it.replaceFirstChar(Char::uppercase) }, { area = areas[it] })
             }
             AppTextField("Teléfono", telefono, { telefono = it.filter(Char::isDigit) }, keyboard = KeyboardType.Phone)
-            AppTextField("Correo electrónico", correo, { correo = it }, keyboard = KeyboardType.Email)
+            AppTextField("Correo institucional", correo, { correo = it }, keyboard = KeyboardType.Email, placeholder = "usuario@uniautonoma.edu.co")
             AppTextField("Contraseña inicial (mínimo 8 caracteres)", password, { password = it }, password = true)
             Spacer(Modifier.height(4.dp))
             Text(

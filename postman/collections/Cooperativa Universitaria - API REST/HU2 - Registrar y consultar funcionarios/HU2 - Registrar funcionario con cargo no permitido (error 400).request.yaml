@@ -16,7 +16,7 @@ body:
       "nombre": "Pedro Pérez",
       "cargo": "Portero",
       "telefono": "3102001007",
-      "email": "pedro.perez@universidad.edu.co"
+      "email": "pedro.perez@uniautonoma.edu.co"
     }
 scripts:
   - type: afterResponse

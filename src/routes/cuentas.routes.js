@@ -15,6 +15,8 @@ router.post('/solicitudes-cuenta', limitar, asyncHandler(async (req, res) =>
   creado(res, await cuentas.solicitar(req.body), 'Solicitud enviada para revisión.')));
 router.get('/solicitudes-cuenta', requireAuth, requireArea('solicitudes'), asyncHandler(async (req, res) =>
   ok(res, { solicitudes: await cuentas.listarSolicitudes() })));
+router.put('/solicitudes-cuenta/:id', requireAuth, requireArea('solicitudes'), asyncHandler(async (req, res) =>
+  ok(res, await cuentas.editarSolicitud(req.params.id, req.body, req.auth), 'Solicitud actualizada correctamente.')));
 router.patch('/solicitudes-cuenta/:id', requireAuth, requireArea('solicitudes'), asyncHandler(async (req, res) =>
   ok(res, await cuentas.decidirSolicitud(req.params.id, req.body, req.auth))));
 router.patch('/mi-perfil', requireAuth, requireRole('estudiante'), limitar, asyncHandler(async (req, res) =>

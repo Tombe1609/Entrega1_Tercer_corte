@@ -77,7 +77,7 @@ Para cada funcionalidad: 1) decir la historia de usuario, 2) indicar método y e
 
 - **Necesidad que resuelve:** registrar un estudiante y consultar sus datos, para permitirle utilizar los servicios de ahorro y crédito educativo.
 - **Petición:** `POST /api/estudiantes`
-- **Cuerpo JSON:** `{ "nombre": "Daniel Esteban Molina", "documento": "1001001012", "telefono": "3001111012", "email": "daniel.molina@universidad.edu.co" }`
+- **Cuerpo JSON:** `{ "nombre": "Daniel Esteban Molina", "documento": "1001001012", "telefono": "3001111012", "email": "daniel.molina@uniautonoma.edu.co" }`
 - **Resultado a observar:** 201. `data.usuario_id` = "U012", tipo "estudiante", estado "activo".
 - **Verificar en Compass:** usuarios → `{ "usuario_id": "U012" }`
 
@@ -85,7 +85,7 @@ Para cada funcionalidad: 1) decir la historia de usuario, 2) indicar método y e
 
 - **Necesidad que resuelve:** registrar funcionarios con diferentes cargos, para delegar actividades administrativas de la cooperativa.
 - **Petición:** `POST /api/funcionarios`
-- **Cuerpo JSON:** `{ "nombre": "Natalia Marcela Gómez", "cargo": "Coordinador de cartera", "telefono": "3102001006", "email": "natalia.gomez@universidad.edu.co" }`
+- **Cuerpo JSON:** `{ "nombre": "Natalia Marcela Gómez", "cargo": "Coordinador de cartera", "telefono": "3102001006", "email": "natalia.gomez@uniautonoma.edu.co" }`
 - **Resultado a observar:** 201. `data.funcionario_id` = "F006", estado "activo".
 - **Verificar en Compass:** funcionarios → `{ "funcionario_id": "F006" }`
 
