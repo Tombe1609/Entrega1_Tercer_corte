@@ -2,6 +2,7 @@ package com.cooperativa.app.ui
 
 import android.app.Application
 import android.content.Context
+import android.util.Patterns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.cooperativa.app.data.ApiClient
@@ -21,6 +22,7 @@ import com.cooperativa.app.data.Producto
 import com.cooperativa.app.data.Compra
 import com.cooperativa.app.data.Repository
 import com.cooperativa.app.data.Session
+import com.cooperativa.app.data.TokenVault
 import com.cooperativa.app.data.SolicitudCuenta
 import com.cooperativa.app.data.SolicitudCuentaRequest
 import com.cooperativa.app.data.EditarSolicitudRequest
@@ -85,41 +87,58 @@ data class Mov(
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("cooperativa", Context.MODE_PRIVATE)
     private val gson = Gson()
-    private val client = ApiClient(prefs, app.getString(R.string.api_base_url))
+    private val tokenVault = TokenVault(app)
+    private val client = ApiClient(prefs, app.getString(R.string.api_base_url), tokenVault)
     private val repo = Repository(client)
 
     // ---------- Sesión ----------
     private val _session = MutableStateFlow(cargarSesion())
     val session: StateFlow<Session?> = _session.asStateFlow()
 
-    private fun cargarSesion(): Session? = try {
-        prefs.getString("session", null)
-            ?.takeIf { prefs.getString(ApiClient.KEY_SESSION_URL, null) == repo.baseUrl }
-            ?.let { gson.fromJson(it, Session::class.java) }
-    } catch (e: Exception) {
-        null
+    /** Recupera solo sesiones emitidas para la URL de API configurada en esta versión. */
+    private fun cargarSesion(): Session? {
+        return try {
+            val guardada = prefs.getString("session", null) ?: return null
+            if (prefs.getString(ApiClient.KEY_SESSION_URL, null) != repo.baseUrl) {
+                prefs.edit().remove("session").remove("auth_token").remove(ApiClient.KEY_SESSION_URL).apply()
+                tokenVault.clear()
+                return null
+            }
+            val sesion = gson.fromJson(guardada, Session::class.java) ?: return null
+            // Migra el token de versiones anteriores desde SharedPreferences sin cifrar.
+            val token = tokenVault.read() ?: sesion.token ?: prefs.getString("auth_token", null)
+            if (token.isNullOrBlank()) {
+                prefs.edit().remove("session").remove("auth_token").remove(ApiClient.KEY_SESSION_URL).apply()
+                tokenVault.clear()
+                return null
+            }
+            tokenVault.write(token)
+            prefs.edit()
+                .putString("session", gson.toJson(sesion.copy(token = null)))
+                .remove("auth_token")
+                .apply()
+            sesion.copy(token = null)
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun guardarSesion(s: Session?) {
-        _session.value = s
+        _session.value = s?.copy(token = null)
         prefs.edit().apply {
-            if (s == null) {
+            if (s == null || s.token.isNullOrBlank()) {
+                _session.value = null
                 remove("session")
                 remove("auth_token")
                 remove(ApiClient.KEY_SESSION_URL)
+                tokenVault.clear()
             } else {
-                putString("session", gson.toJson(s))
-                putString("auth_token", s.token)
+                tokenVault.write(s.token)
+                putString("session", gson.toJson(s.copy(token = null)))
+                remove("auth_token")
                 putString(ApiClient.KEY_SESSION_URL, repo.baseUrl)
             }
         }.apply()
-    }
-
-    val servidor: String get() = repo.baseUrl
-    fun cambiarServidor(url: String) {
-        check(!_busy.value) { "Espera a que termine el inicio de sesión." }
-        repo.cambiarServidor(url)
-        logout()
     }
 
     // ---------- Estado de formularios (cargando / error / éxito) ----------
@@ -179,15 +198,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- Login / logout ----------
     fun login(email: String, password: String, onOk: (Session) -> Unit) {
-        if (email.isBlank() || password.isBlank()) {
-            _formError.value = "Escribe tu correo y tu contraseña."
+        val correo = email.trim()
+        _formError.value = when {
+            correo.isBlank() -> "Escribe tu correo electrónico."
+            !Patterns.EMAIL_ADDRESS.matcher(correo).matches() -> "El correo no tiene un formato válido."
+            password.isEmpty() -> "Escribe tu contraseña."
+            else -> null
+        }
+        if (_formError.value != null) {
             return
         }
         viewModelScope.launch {
             _busy.value = true
             _formError.value = null
             try {
-                val s = repo.login(email, password)
+                val s = repo.login(correo, password)
                 guardarSesion(s)
                 _student.value = UiState.Loading
                 _admin.value = UiState.Loading

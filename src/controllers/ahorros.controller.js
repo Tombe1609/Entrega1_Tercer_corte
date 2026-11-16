@@ -1,6 +1,7 @@
 const servicio = require('../services/ahorros.service');
 const v = require('../utils/validadores');
 const { ok, creado } = require('../utils/respuestas');
+const { crearContextoIdempotencia } = require('../utils/idempotencia');
 
 /** POST /api/ahorros  (HU3) */
 async function crearCuenta(req, res) {
@@ -38,7 +39,7 @@ function crearMovimiento(tipo, descripcionPorDefecto, mensaje) {
     const valor = v.montoPositivo(body, 'valor', errores);
     const descripcion = v.textoOpcional(body, 'descripcion', errores, { max: 200, porDefecto: descripcionPorDefecto });
     v.lanzarSiHayErrores(errores);
-    const resultado = await servicio.registrarMovimiento(ahorro_id, tipo, valor, descripcion);
+    const resultado = await servicio.registrarMovimiento(ahorro_id, tipo, valor, descripcion, crearContextoIdempotencia(req));
     return creado(res, resultado, mensaje);
   };
 }
@@ -67,7 +68,7 @@ async function transferir(req, res) {
   if (valor !== undefined && valor < 1000) errores.push('El campo "valor" debe ser al menos 1000.');
   const descripcion = v.textoOpcional(body, 'descripcion', errores, { max: 160, porDefecto: 'Transferencia entre estudiantes' });
   v.lanzarSiHayErrores(errores);
-  const resultado = await servicio.transferir(req.auth.id, usuario_destino, valor, descripcion);
+  const resultado = await servicio.transferir(req.auth.id, usuario_destino, valor, descripcion, crearContextoIdempotencia(req));
   return creado(res, resultado, 'Transferencia realizada correctamente.');
 }
 

@@ -2,7 +2,6 @@ package com.cooperativa.app.data
 
 import android.content.SharedPreferences
 import com.cooperativa.app.BuildConfig
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -15,7 +14,10 @@ import retrofit2.http.PUT
 import retrofit2.http.DELETE
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Header
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.UUID
 
 /** Todos los endpoints de la API REST (Node.js + MongoDB). */
 interface CooperativaApi {
@@ -39,10 +41,10 @@ interface CooperativaApi {
     @GET("api/ahorros/{id}") suspend fun cuenta(@Path("id") id: String): ApiResponse<Ahorro>
     @DELETE("api/ahorros/{id}") suspend fun cerrarCuenta(@Path("id") id: String): ApiResponse<Map<String, String>>
     @POST("api/ahorros/{id}/depositos")
-    suspend fun depositar(@Path("id") id: String, @Body body: MovimientoRequest): ApiResponse<MovimientoResultado>
+    suspend fun depositar(@Path("id") id: String, @Header("Idempotency-Key") key: String, @Body body: MovimientoRequest): ApiResponse<MovimientoResultado>
     @POST("api/ahorros/{id}/retiros")
-    suspend fun retirar(@Path("id") id: String, @Body body: MovimientoRequest): ApiResponse<MovimientoResultado>
-    @POST("api/ahorros/transferencias") suspend fun transferir(@Body body: TransferenciaRequest): ApiResponse<TransferenciaResultado>
+    suspend fun retirar(@Path("id") id: String, @Header("Idempotency-Key") key: String, @Body body: MovimientoRequest): ApiResponse<MovimientoResultado>
+    @POST("api/ahorros/transferencias") suspend fun transferir(@Header("Idempotency-Key") key: String, @Body body: TransferenciaRequest): ApiResponse<TransferenciaResultado>
     @GET("api/ahorros/{id}/movimientos") suspend fun movimientos(@Path("id") id: String): ApiResponse<MovimientosData>
 
     @GET("api/fines-educativos") suspend fun fines(): ApiResponse<FinesData>
@@ -50,14 +52,14 @@ interface CooperativaApi {
     @POST("api/productos") suspend fun crearProducto(@Body body: ProductoRequest): ApiResponse<Producto>
     @PATCH("api/productos/{id}") suspend fun actualizarProducto(@Path("id") id:String,@Body body:ProductoRequest):ApiResponse<Producto>
     @PATCH("api/productos/{id}/estado") suspend fun cambiarEstadoProducto(@Path("id") id:String,@Body body:EstadoProductoRequest):ApiResponse<Producto>
-    @POST("api/productos/{id}/compras") suspend fun comprar(@Path("id") id: String, @Body body: CompraRequest): ApiResponse<CompraResultado>
+    @POST("api/productos/{id}/compras") suspend fun comprar(@Path("id") id: String, @Header("Idempotency-Key") key: String, @Body body: CompraRequest): ApiResponse<CompraResultado>
     @GET("api/productos/compras/mias") suspend fun misCompras():ApiResponse<ComprasData>
     @POST("api/prestamos") suspend fun solicitarPrestamo(@Body body: PrestamoRequest): ApiResponse<PrestamoCreado>
     @GET("api/estudiantes/{id}/prestamos") suspend fun prestamosDe(@Path("id") id: String): ApiResponse<PrestamosData>
     @GET("api/prestamos") suspend fun prestamosAdmin(): ApiResponse<PrestamosAdminData>
-    @POST("api/prestamos/{id}/aprobar") suspend fun aprobarPrestamo(@Path("id") id: String): ApiResponse<DesembolsoResultado>
+    @POST("api/prestamos/{id}/aprobar") suspend fun aprobarPrestamo(@Path("id") id: String, @Header("Idempotency-Key") key: String): ApiResponse<DesembolsoResultado>
     @POST("api/prestamos/{id}/rechazar") suspend fun rechazarPrestamo(@Path("id") id: String, @Body body: Map<String, String>): ApiResponse<Map<String, String>>
-    @POST("api/prestamos/{id}/cuotas/{numero}/pagar") suspend fun pagarCuota(@Path("id") id: String,@Path("numero") numero:Int): ApiResponse<CuotaResultado>
+    @POST("api/prestamos/{id}/cuotas/{numero}/pagar") suspend fun pagarCuota(@Path("id") id: String,@Path("numero") numero:Int,@Header("Idempotency-Key") key: String): ApiResponse<CuotaResultado>
     @GET("api/prestamos/{id}/pagos") suspend fun pagos(@Path("id") id: String): ApiResponse<PagosData>
 
     @GET("api/distribucion-intereses/calculo")
@@ -68,41 +70,59 @@ interface CooperativaApi {
     @GET("api/reportes/estadisticas") suspend fun estadisticas(): ApiResponse<Estadisticas>
 }
 
-/** Release usa el servidor de compilación. Debug permite cambiarlo desde el login. */
+/** Cliente Retrofit de la API HTTPS de Render; la URL es fija en todas las variantes. */
 class ApiClient(
     private val prefs: SharedPreferences,
     private val defaultBaseUrl: String,
+    private val tokenVault: TokenVault,
 ) {
     private var cache: CooperativaApi? = null
 
-    var baseUrl: String
-        get() = if (BuildConfig.DEBUG) prefs.getString(KEY_URL, null) ?: defaultBaseUrl else defaultBaseUrl
-        set(value) {
-            check(BuildConfig.DEBUG) { "El servidor de esta versión es fijo." }
-            prefs.edit().putString(KEY_URL, normalizar(value)).apply()
-            cache = null
-        }
+    // Ignora preferencias de servidor guardadas por versiones anteriores de desarrollo.
+    val baseUrl: String = defaultBaseUrl
 
     fun api(): CooperativaApi = cache ?: construir().also { cache = it }
+
+    /** Conserva una clave hasta recibir respuesta concluyente para poder repetir el mismo intento con seguridad. */
+    @Synchronized
+    fun claveIdempotencia(operacion: String): String {
+        val hash = huellaOperacion(operacion)
+        val storageKey = "pending_idempotency_$hash"
+        return prefs.getString(storageKey, null) ?: UUID.randomUUID().toString().also {
+            check(prefs.edit().putString(storageKey, it).commit()) { "No se pudo guardar la clave de la operación." }
+        }
+    }
+
+    @Synchronized
+    fun completarOperacionIdempotente(operacion: String) {
+        val hash = huellaOperacion(operacion)
+        prefs.edit().remove("pending_idempotency_$hash").commit()
+    }
+
+    private fun huellaOperacion(operacion: String): String =
+        MessageDigest.getInstance("SHA-256").digest(operacion.toByteArray())
+            .joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
 
     private fun construir(): CooperativaApi {
         val url = baseUrl
         val builder = OkHttpClient.Builder()
-            // La selección de servidor y las credenciales se aplican al destino original.
+            // El token solo se envía a la API asociada con la sesión, nunca a otro host.
             .followRedirects(false)
             .followSslRedirects(false)
             .addInterceptor { chain ->
                 val original = chain.request()
-                val sesion = prefs.all
-                val token = (sesion[KEY_TOKEN] as? String)?.takeIf { sesion[KEY_SESSION_URL] == url }
+                val token = tokenVault.read()?.takeIf { prefs.getString(KEY_SESSION_URL, null) == url }
                 val request = if (!token.isNullOrBlank() && !original.url.encodedPath.endsWith("/api/auth/login")) {
                     original.newBuilder().header("Authorization", "Bearer $token").build()
                 } else original
                 chain.proceed(request)
             }
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .writeTimeout(20, TimeUnit.SECONDS)
+            // Render Free puede tardar decenas de segundos al despertar tras inactividad.
+            // Dar margen al arranque evita errores prematuros en la app móvil.
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(100, TimeUnit.SECONDS)
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
         }
@@ -115,19 +135,6 @@ class ApiClient(
     }
 
     companion object {
-        private const val KEY_URL = "base_url"
-        private const val KEY_TOKEN = "auth_token"
         const val KEY_SESSION_URL = "session_base_url"
-
-        fun normalizar(url: String): String {
-            val texto = url.trim()
-            val candidata = if ("://" in texto) texto else "http://$texto"
-            val destino = candidata.toHttpUrlOrNull()
-            require(destino != null && destino.username.isEmpty() && destino.password.isEmpty() &&
-                destino.query == null && destino.fragment == null) {
-                "Escribe una URL base HTTP o HTTPS válida, sin credenciales ni parámetros."
-            }
-            return destino.toString().trimEnd('/') + "/"
-        }
     }
 }

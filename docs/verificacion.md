@@ -25,12 +25,26 @@ El código nuevo de API se inició en el puerto 3000 contra `cooperativa_univers
 
 También se verificaron lecturas de estudiantes, funcionarios, ahorros, movimientos, finalidades, pagos y distribución. En la matriz de seguridad: solicitudes sin token e inválidas dieron 401; el estudiante pudo leer su cuenta y préstamos; el acceso a cuenta ajena, movimientos ajenos, préstamos ajenos, listados administrativos, apertura de cuenta para tercero y préstamo para tercero dio 403; el funcionario pudo consultar el panel administrativo pero no confirmar la distribución; el rector completó las historias HU1-HU10. La base de prueba se eliminó después de la ejecución.
 
-## Hallazgos pendientes
+## Hallazgos registrados el 28 de octubre de 2026
 
-1. **URL de release:** el recurso base sigue apuntando a `10.0.2.2`, válido para el emulador. Antes de entregar el APK se debe configurar la URL HTTPS desplegada.
-2. **HTTP local:** Android permite tráfico HTTP de desarrollo; restringirlo a debug y desactivarlo para release.
-3. **Entrega:** se verificó `assembleDebug`, pero no se ejecutó una compilación `release` ni se configuró una firma de publicación.
-4. **Escala:** las consultas administrativas siguen realizando varias peticiones por usuario/cuenta/préstamo; con más datos puede crecer el tiempo de carga.
-5. **Regla HU9:** la API calcula y registra la distribución; no acredita esos intereses en las cuentas de ahorro. Confirmar que esa conducta coincide con el enunciado antes de presentarla como acreditación de saldo.
+1. **URL y HTTP local:** resueltos el 16 de noviembre; debug y release usan HTTPS de Render y se retiró el selector de dirección local.
+2. **Firma de publicación:** pendiente. Debug y release compilan; release sigue sin firmar hasta que se configure la clave de publicación.
+3. **Escala:** las consultas administrativas siguen realizando varias peticiones por usuario/cuenta/préstamo; con más datos puede crecer el tiempo de carga.
+4. **Regla HU9:** la API calcula y registra la distribución; no acredita esos intereses en las cuentas de ahorro. Confirmar que esa conducta coincide con el enunciado antes de presentarla como acreditación de saldo.
 
 La verificación confirma las 10 historias y las reglas de acceso principales en una base aislada. No equivale a una auditoría de seguridad completa ni a una prueba de carga.
+
+## Verificación incremental — 16 de noviembre de 2026
+
+### Migración del token a JWT
+
+- Se reemplazó el formato firmado propio por JWT estándar usando `jsonwebtoken` 9.0.3 y HS256.
+- La API valida algoritmo, firma, emisor `cooperativa-api`, audiencia `cooperativa-app`, expiración de 8 horas, rol y versión de sesión. El identificador se transporta como `sub`; el correo no se incluye en el payload.
+- `npm test`: 7 pruebas aprobadas, incluidas firma, expiración, audiencia, manipulación de token, rol y idempotencia.
+- `npm audit`: 0 vulnerabilidades conocidas después de fijar `nodemon` 3.1.11 en desarrollo.
+- Android recibe el token como Bearer opaco, así que el contrato JSON de login no cambia. Las compilaciones Android debug/release se verificaron por separado; no fue necesario cambiar Retrofit.
+- La app Android se sincronizó en versión 1.5.1 (`versionCode` 7) tanto en la carpeta usada por Android Studio como en `android/` del repositorio.
+
+### Pendiente de publicación
+
+El servicio Render aún debe desplegar esta versión de la API para que el inicio de sesión empiece a emitir JWT. La comprobación `/api/health` realizada antes del despliegue mostró API y MongoDB disponibles; no verifica esta nueva versión del código. Los tokens del formato previo serán rechazados después del despliegue y las personas deberán autenticarse de nuevo. No se requieren cambios ni limpieza de MongoDB para la migración.

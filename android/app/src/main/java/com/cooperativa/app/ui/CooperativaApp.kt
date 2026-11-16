@@ -3,6 +3,7 @@ package com.cooperativa.app.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -67,7 +68,7 @@ private fun destinoInicial(s: Session?) = when {
 @Composable
 fun CooperativaApp(vm: MainViewModel) {
     val themeSession by vm.session.collectAsState()
-    CooperativaTheme(themeSession?.rol) { CooperativaAppContent(vm) }
+    CooperativaTheme(themeSession?.rol, darkTheme = isSystemInDarkTheme()) { CooperativaAppContent(vm) }
 }
 
 @Composable

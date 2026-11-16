@@ -3,6 +3,7 @@ const AppError = require('../utils/AppError');
 const { confirmarEscritura } = require('../utils/validadores');
 const { siguientesIds, conReintentoDeId } = require('../utils/ids');
 const { ejecutarAtomico } = require('../utils/transaccion');
+const { ejecutarIdempotente } = require('../utils/idempotencia');
 
 const SIN_ID = { projection: { _id: 0 } };
 
@@ -79,12 +80,12 @@ async function cerrarCuenta(usuario_id, ahorro_id) {
  * movimiento en el historial como una sola operación atómica.
  * El retiro solo se aplica si el saldo es suficiente (filtro saldo >= valor).
  */
-async function registrarMovimiento(ahorro_id, tipo, valor, descripcion) {
+async function registrarMovimiento(ahorro_id, tipo, valor, descripcion, idempotencia) {
   const ahorros = coleccion('ahorros');
   const movimientos = coleccion('movimientos_ahorro');
 
   return conReintentoDeId('movimiento_id', () =>
-    ejecutarAtomico(async ({ session, alDeshacer }) => {
+    ejecutarIdempotente(idempotencia, async ({ session, alDeshacer }) => {
       const cuenta = await ahorros.findOne({ ahorro_id }, { session });
       if (!cuenta) throw new AppError(404, `No existe una cuenta de ahorro con id ${ahorro_id}.`);
       if (cuenta.estado !== 'activo') throw new AppError(400, 'La cuenta de ahorro no está activa.');
@@ -119,14 +120,14 @@ async function registrarMovimiento(ahorro_id, tipo, valor, descripcion) {
 }
 
 /** Transfiere fondos entre dos cuentas activas y registra el débito/crédito juntos. */
-async function transferir(usuario_origen, usuario_destino, valor, descripcion = 'Transferencia entre estudiantes') {
+async function transferir(usuario_origen, usuario_destino, valor, descripcion = 'Transferencia entre estudiantes', idempotencia) {
   if (usuario_origen === usuario_destino) throw new AppError(400, 'No puedes transferir a tu propia cuenta.');
   const ahorros = coleccion('ahorros');
   const movimientos = coleccion('movimientos_ahorro');
-  const origen = await ahorros.findOne({ usuario_id: usuario_origen, estado: 'activo' });
-  const destino = await ahorros.findOne({ usuario_id: usuario_destino, estado: 'activo' });
-  if (!origen || !destino) throw new AppError(404, 'No se encontró una cuenta de ahorro activa para uno de los estudiantes.');
-  return conReintentoDeId('movimiento_id', () => ejecutarAtomico(async ({ session, alDeshacer }) => {
+  return conReintentoDeId('movimiento_id', () => ejecutarIdempotente(idempotencia, async ({ session, alDeshacer }) => {
+    const origen = await ahorros.findOne({ usuario_id: usuario_origen, estado: 'activo' }, { session, ...SIN_ID });
+    const destino = await ahorros.findOne({ usuario_id: usuario_destino, estado: 'activo' }, { session, ...SIN_ID });
+    if (!origen || !destino) throw new AppError(404, 'No se encontró una cuenta de ahorro activa para uno de los estudiantes.');
     const debito = await ahorros.updateOne({ ahorro_id: origen.ahorro_id, estado: 'activo', saldo: { $gte: valor } }, { $inc: { saldo: -valor } }, { session });
     confirmarEscritura(debito);
     if (debito.matchedCount !== 1) throw new AppError(400, 'Saldo insuficiente para realizar la transferencia.');

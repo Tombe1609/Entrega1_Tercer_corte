@@ -2,7 +2,7 @@ const { coleccion } = require('../config/database');
 const AppError = require('../utils/AppError');
 const { confirmarEscritura } = require('../utils/validadores');
 const { siguientesIds, conReintentoDeId } = require('../utils/ids');
-const { ejecutarAtomico } = require('../utils/transaccion');
+const { ejecutarIdempotente } = require('../utils/idempotencia');
 const { hoyColombia, productoDentroDeVigencia, filtroVigenciaProducto } = require('../utils/fechas');
 const SIN_ID = { projection: { _id: 0 } };
 
@@ -77,17 +77,17 @@ async function cambiarEstado(producto_id, estado) {
 }
 async function comprasDe(usuario_id){ return coleccion('compras').find({usuario_id,estado:'pagada'},SIN_ID).toArray(); }
 
-async function comprar(usuario_id, producto_id, valor) {
+async function comprar(usuario_id, producto_id, valor, idempotencia) {
   const productos = coleccion('productos');
-  const producto = await productos.findOne({ producto_id, estado: 'activo' }, SIN_ID);
-  if (!producto) throw new AppError(404, 'El producto no existe o no está disponible.');
-  const hoy = hoyColombia();
-  if (!productoDentroDeVigencia(producto, hoy)) throw new AppError(409,'La vigencia del producto terminó o aún no comienza.');
-  if (valor !== producto.precio) throw new AppError(400, 'El valor de compra no coincide con el precio vigente.');
   const ahorros = coleccion('ahorros'); const movimientos = coleccion('movimientos_ahorro'); const compras = coleccion('compras');
-  const cuenta = await ahorros.findOne({ usuario_id, estado: 'activo' }, SIN_ID);
-  if (!cuenta) throw new AppError(404, 'No tienes una cuenta de ahorro activa.');
-  return conReintentoDeId(['compra_id','movimiento_id'], () => ejecutarAtomico(async ({ session, alDeshacer }) => {
+  return conReintentoDeId(['compra_id','movimiento_id'], () => ejecutarIdempotente(idempotencia, async ({ session, alDeshacer }) => {
+    const producto = await productos.findOne({ producto_id, estado: 'activo' }, { session, ...SIN_ID });
+    if (!producto) throw new AppError(404, 'El producto no existe o no está disponible.');
+    const hoy = hoyColombia();
+    if (!productoDentroDeVigencia(producto, hoy)) throw new AppError(409,'La vigencia del producto terminó o aún no comienza.');
+    if (valor !== producto.precio) throw new AppError(400, 'El valor de compra no coincide con el precio vigente.');
+    const cuenta = await ahorros.findOne({ usuario_id, estado: 'activo' }, { session, ...SIN_ID });
+    if (!cuenta) throw new AppError(404, 'No tienes una cuenta de ahorro activa.');
     if(await compras.findOne({usuario_id,producto_id,estado:'pagada'},{session,...SIN_ID})) throw new AppError(409,'Ya compraste este producto; no se permiten compras repetidas.');
     const reserva=await productos.updateOne({producto_id,estado:'activo',usuarios_compradores:{$ne:usuario_id},...filtroVigenciaProducto(hoy)},{$addToSet:{usuarios_compradores:usuario_id}},{session});
     confirmarEscritura(reserva);

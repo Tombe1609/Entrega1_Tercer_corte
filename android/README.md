@@ -15,17 +15,17 @@ Aplicación móvil Android desarrollada con Kotlin y Jetpack Compose. Consume la
 
 ## API propia y URL base
 
-- Emulador Android: `http://10.0.2.2:3000/` (`10.0.2.2` apunta al equipo anfitrión desde el emulador).
-- Dispositivo físico en la misma red: `http://IP_LOCAL_DEL_EQUIPO:3000/`; permitir el puerto 3000 en el firewall.
-- Producción: configurar la URL HTTPS del backend desplegado. No publicar credenciales ni usar HTTP para datos reales.
+- URL base única para Android: `https://cooperativa-api-m37c.onrender.com/`.
+- Se configura en `app/src/main/res/values/config.xml`; debug y release utilizan Render.
+- La app no tiene selector de servidor ni respaldo local.
 
-La variante `debug` lee `api_base_url` de `app/src/debug/res/values/config.xml` y permite cambiar el servidor desde el inicio de sesión.
+Si cambia el dominio, actualiza `api_base_url` y recompila. Retrofit añade `/api/...` al endpoint de cada función.
 
 ## APK de entrega
 
-Agrega `COOPERATIVA_API_URL=https://tu-dominio.example/` al archivo `gradle.properties` de tu carpeta de usuario de Gradle (en Windows, `%USERPROFILE%\.gradle\gradle.properties`). Reemplaza el ejemplo por la URL base real de la API, con HTTPS y con la ruta anterior a `/api/`. Retrofit añade `api/` a las rutas.
+La URL HTTPS de Render ya está configurada para debug y release. Retrofit añade `api/...` a esa base para construir los endpoints.
 
-Vuelve a sincronizar Gradle en Android Studio y genera un APK firmado de la variante `release`. Gradle genera el recurso de URL de esa variante. El servidor queda fijo y la variante exige HTTPS. Al actualizar desde una versión con una sesión anterior a este cambio, Android pedirá iniciar sesión de nuevo.
+La app Android está en versión `1.5.1` (código `7`). Sincroniza Gradle y genera el APK firmado de la variante `release`. Gradle toma la firma de las variables `COOPERATIVA_RELEASE_KEYSTORE`, `COOPERATIVA_RELEASE_STORE_PASSWORD`, `COOPERATIVA_RELEASE_KEY_ALIAS` y `COOPERATIVA_RELEASE_KEY_PASSWORD`; sin ellas, el APK release queda sin firmar. Conserva la clave y las contraseñas fuera del repositorio. Tras desplegar JWT, todas las personas deberán iniciar sesión de nuevo porque los tokens previos ya no serán aceptados.
 
 ## Endpoints usados por Android
 
@@ -57,7 +57,7 @@ Las solicitudes nuevas quedan pendientes y no afectan el saldo. Un funcionario a
    ```
 
    Las credenciales demo se deben configurar localmente mediante `DEMO_LOGIN_PASSWORD`; no se publican en esta guía. Usa cuentas y datos ficticios en demostraciones.
-3. Comprueba `http://localhost:3000/api/health`.
-4. Abre el directorio `android/` en Android Studio, sincroniza Gradle y ejecuta la app en un emulador. La URL base del emulador debe ser `http://10.0.2.2:3000/`.
+3. Comprueba `https://cooperativa-api-m37c.onrender.com/api/health`.
+4. Abre el directorio `android/` en Android Studio, sincroniza Gradle y ejecuta la app; se conectará a Render.
 
 Consulta [README_ANDROID.md](README_ANDROID.md) para detalles de arquitectura Android. Las historias están en [historias-usuario.md](../docs/historias-usuario.md).

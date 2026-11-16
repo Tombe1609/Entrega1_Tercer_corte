@@ -1,6 +1,7 @@
 package com.cooperativa.app.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -49,6 +52,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import android.app.DatePickerDialog
 import java.util.Calendar
@@ -68,16 +74,6 @@ import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import com.cooperativa.app.ui.theme.Bg
-import com.cooperativa.app.ui.theme.CreamBg
-import com.cooperativa.app.ui.theme.CreamText
-import com.cooperativa.app.ui.theme.GreenBg
-import com.cooperativa.app.ui.theme.GreenText
-import com.cooperativa.app.ui.theme.GreyBg
-import com.cooperativa.app.ui.theme.Ink
-import com.cooperativa.app.ui.theme.Line
-import com.cooperativa.app.ui.theme.Muted
-import com.cooperativa.app.ui.theme.RedText
 
 /** Estado de una carga: cargando / éxito / error (como pide la propuesta). */
 sealed interface UiState<out T> {
@@ -86,7 +82,41 @@ sealed interface UiState<out T> {
     data class Error(val message: String) : UiState<Nothing>
 }
 
-/** Pantalla base: encabezado redondeado de color + contenido con scroll. */
+/** Encabezado Nova reutilizable. */
+@Composable
+fun NovaTopBar(
+    title: String,
+    subtitle: String? = null,
+    onBack: (() -> Unit)? = null,
+    headerColor: Color = MaterialTheme.colorScheme.primary,
+    headerExtra: @Composable ColumnScope.() -> Unit = {},
+) {
+    Column(
+        Modifier.fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 30.dp, bottomEnd = 30.dp))
+            .background(headerColor)
+            .statusBarsPadding()
+            .padding(horizontal = 22.dp, vertical = 18.dp)
+    ) {
+        if (onBack != null) {
+            Box(
+                Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                    .background(Color.White.copy(alpha = 0.18f))
+                    .clickable(role = Role.Button, onClickLabel = "Volver", onClick = onBack),
+                contentAlignment = Alignment.Center,
+        ) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver", tint = MaterialTheme.colorScheme.onPrimary) }
+            Spacer(Modifier.height(12.dp))
+        } else Spacer(Modifier.height(10.dp))
+        Text(title, color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineMedium)
+        if (subtitle != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(subtitle, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f), style = MaterialTheme.typography.bodyMedium)
+        }
+        headerExtra()
+    }
+}
+
+/** Pantalla base: encabezado compacto y contenido con scroll seguro para formularios. */
 @Composable
 fun ScreenScaffold(
     title: String,
@@ -96,33 +126,8 @@ fun ScreenScaffold(
     headerExtra: @Composable ColumnScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().background(Bg).imePadding()) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                .background(headerColor ?: MaterialTheme.colorScheme.primary)
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 20.dp)
-        ) {
-            if (onBack != null) {
-                Box(
-                    Modifier.size(40.dp).clip(RoundedCornerShape(14.dp))
-                        .background(Color.White.copy(alpha = 0.18f))
-                        .clickable { onBack() },
-                    contentAlignment = Alignment.Center,
-                ) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver", tint = Color.White) }
-                Spacer(Modifier.height(16.dp))
-            } else {
-                Spacer(Modifier.height(24.dp))
-            }
-            Text(title, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-            if (subtitle != null) {
-                Spacer(Modifier.height(4.dp))
-                Text(subtitle, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-            }
-            headerExtra()
-        }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
+        NovaTopBar(title, subtitle, onBack, headerColor ?: MaterialTheme.colorScheme.primary, headerExtra)
         Column(
             Modifier
                 .weight(1f)
@@ -139,17 +144,23 @@ fun ScreenScaffold(
 }
 
 @Composable
-fun AppCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+fun NovaCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
     val base = modifier.fillMaxWidth()
     Surface(
-        modifier = if (onClick != null) base.clickable { onClick() } else base,
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White,
-        shadowElevation = 2.dp,
+        modifier = (if (onClick != null) base.clickable(role = Role.Button) { onClick() } else base).animateContentSize(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)),
+        shadowElevation = 1.dp,
     ) {
         Column(Modifier.padding(16.dp), content = content)
     }
 }
+
+/** Nombre conservado para no cambiar las llamadas existentes de las pantallas. */
+@Composable
+fun AppCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) =
+    NovaCard(modifier, onClick, content)
 
 @Composable
 fun Tinted(color: Color, textColor: Color, text: String) {
@@ -159,11 +170,15 @@ fun Tinted(color: Color, textColor: Color, text: String) {
 }
 
 @Composable
-fun WarningBox(text: String) = Tinted(CreamBg, CreamText, text)
+fun WarningBox(text: String) {
+    Surface(shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.tertiaryContainer, modifier = Modifier.fillMaxWidth()) {
+        Text(text, color = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.padding(16.dp), fontSize = 14.sp)
+    }
+}
 
 @Composable
 fun InfoBox(content: @Composable ColumnScope.() -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = GreenBg, modifier = Modifier.fillMaxWidth()) {
+    Surface(shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
     }
 }
@@ -171,70 +186,77 @@ fun InfoBox(content: @Composable ColumnScope.() -> Unit) {
 enum class ChipKind { GREEN, ORANGE, GREY }
 
 @Composable
-fun StatusChip(text: String, kind: ChipKind = ChipKind.GREEN) {
+fun NovaStatusChip(text: String, kind: ChipKind = ChipKind.GREEN) {
     val (bg, fg) = when (kind) {
-        ChipKind.GREEN -> GreenBg to GreenText
-        ChipKind.ORANGE -> CreamBg to CreamText
-        ChipKind.GREY -> GreyBg to Muted
+        ChipKind.GREEN -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        ChipKind.ORANGE -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        ChipKind.GREY -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Surface(shape = RoundedCornerShape(50), color = bg) {
+    Surface(shape = RoundedCornerShape(50), color = bg, modifier = Modifier.semantics { contentDescription = "Estado: $text" }) {
         Text(text, color = fg, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp))
     }
 }
 
 @Composable
-fun LabelValue(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = Ink) {
+fun StatusChip(text: String, kind: ChipKind = ChipKind.GREEN) = NovaStatusChip(text, kind)
+
+@Composable
+fun LabelValue(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color? = null) {
     Column(modifier) {
-        Text(label, color = Muted, fontSize = 13.sp)
-        Text(value, color = valueColor, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+        Text(value, color = valueColor ?: MaterialTheme.colorScheme.onSurface, fontSize = 20.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
-fun RowLine(label: String, value: String, valueColor: Color = Ink) {
+fun RowLine(label: String, value: String, valueColor: Color? = null) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = Muted, fontSize = 14.sp)
-        Text(value, color = valueColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+        Text(value, color = valueColor ?: MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
-fun PrimaryButton(text: String, enabled: Boolean = true, loading: Boolean = false, onClick: () -> Unit) {
+fun NovaButton(text: String, enabled: Boolean = true, loading: Boolean = false, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
-        modifier = Modifier.fillMaxWidth().height(54.dp),
+        modifier = Modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary, disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), disabledContentColor = MaterialTheme.colorScheme.onPrimary),
     ) {
-        if (loading) CircularProgressIndicator(Modifier.size(22.dp), color = Ink, strokeWidth = 2.5.dp)
+        if (loading) CircularProgressIndicator(Modifier.size(22.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.5.dp)
         else Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }
 }
 
 @Composable
+fun PrimaryButton(text: String, enabled: Boolean = true, loading: Boolean = false, onClick: () -> Unit) =
+    NovaButton(text, enabled, loading, onClick)
+
+@Composable
 fun SecondaryButton(text: String, color: Color = MaterialTheme.colorScheme.primary, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(54.dp),
+        modifier = Modifier.fillMaxWidth().height(56.dp),
         shape = RoundedCornerShape(18.dp),
         border = BorderStroke(2.dp, color),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White, contentColor = color),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = color),
     ) { Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp) }
 }
 
 @Composable
 private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White,
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
     focusedBorderColor = MaterialTheme.colorScheme.primary,
-    unfocusedBorderColor = Line,
-    focusedTextColor = Color.Black,
-    unfocusedTextColor = Color.Black,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
 )
 
 @Composable
-fun AppTextField(
+fun NovaTextField(
     label: String,
     value: String,
     onChange: (String) -> Unit,
@@ -257,9 +279,9 @@ fun AppTextField(
     val prefixContent: (@Composable () -> Unit)? =
         if (prefix != null) ({ Text(prefix, fontWeight = FontWeight.Bold) }) else null
     val placeholderContent: (@Composable () -> Unit)? =
-        if (placeholder != null) ({ Text(placeholder, color = Muted) }) else null
+        if (placeholder != null) ({ Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) }) else null
     Column(modifier) {
-        Text(label, color = Ink, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
             value = value,
@@ -277,6 +299,19 @@ fun AppTextField(
     }
 }
 
+@Composable
+fun AppTextField(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    keyboard: KeyboardType = KeyboardType.Text,
+    password: Boolean = false,
+    prefix: String? = null,
+    placeholder: String? = null,
+    singleLine: Boolean = true,
+) = NovaTextField(label, value, onChange, modifier, keyboard, password, prefix, placeholder, singleLine)
+
 /** Campo de dinero: solo dígitos. Devuelve el texto; usa [montoDe] para convertirlo a número. */
 @Composable
 fun MoneyField(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
@@ -293,16 +328,16 @@ fun montoDe(texto: String): Double = texto.toDoubleOrNull() ?: 0.0
 fun DropdownField(label: String, selected: String, options: List<String>, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
     var abierto by remember { mutableStateOf(false) }
     Column(modifier) {
-        Text(label, color = Ink, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         Spacer(Modifier.height(6.dp))
         Box {
             Surface(
                 modifier = Modifier.fillMaxWidth().height(56.dp).clickable { abierto = true },
-                shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Line),
+                shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             ) {
                 Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(selected.ifBlank { "Seleccionar" }, color = if (selected.isBlank()) Muted else Color.Black, fontSize = 16.sp)
-                    Text("▾", color = Muted)
+                    Text(selected.ifBlank { "Seleccionar" }, color = if (selected.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
+                    Text("▾", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
@@ -319,16 +354,16 @@ fun DatePickerField(label:String,isoDate:String,onSelect:(String)->Unit,modifier
     val context= LocalContext.current
     val calendar= remember(isoDate) { Calendar.getInstance().apply { if(isoDate.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) { set(Calendar.YEAR,isoDate.substring(0,4).toInt());set(Calendar.MONTH,isoDate.substring(5,7).toInt()-1);set(Calendar.DAY_OF_MONTH,isoDate.substring(8,10).toInt()) } } }
     Column(modifier) {
-        Text(label,color=Ink,fontWeight=FontWeight.Bold,fontSize=14.sp); Spacer(Modifier.height(6.dp))
+        Text(label,color=MaterialTheme.colorScheme.onSurface,fontWeight=FontWeight.Bold,fontSize=14.sp); Spacer(Modifier.height(6.dp))
         OutlinedButton(onClick={ DatePickerDialog(context,{_,year,month,day->onSelect("%04d-%02d-%02d".format(year,month+1,day))},calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH)).apply { datePicker.minDate=System.currentTimeMillis()+86400000L }.show() },modifier=Modifier.fillMaxWidth().height(56.dp),shape=RoundedCornerShape(16.dp)) {
-            Text(if(isoDate.isBlank()) "Elegir fecha" else isoDate,color=Ink)
+            Text(if(isoDate.isBlank()) "Elegir fecha" else isoDate,color=MaterialTheme.colorScheme.onSurface)
         }
     }
 }
 
 @Composable
 fun ErrorText(message: String?) {
-    if (!message.isNullOrBlank()) Tinted(Color(0xFFFBE4E0), RedText, message)
+    if (!message.isNullOrBlank()) Tinted(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer, message)
 }
 
 @Composable
@@ -362,18 +397,18 @@ fun ListRow(
     title: String,
     subtitle: String,
     trailing: String,
-    trailingColor: Color = Ink,
+    trailingColor: Color? = null,
     extra: String? = null,
     badge: (@Composable () -> Unit)? = null,
 ) {
     Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-            Text(subtitle, color = Muted, fontSize = 13.sp)
-            if (extra != null) Text(extra, color = Muted, fontSize = 13.sp)
+            Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            if (extra != null) Text(extra, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(trailing, color = trailingColor, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            Text(trailing, color = trailingColor ?: MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 17.sp)
             if (badge != null) { Spacer(Modifier.height(4.dp)); badge() }
         }
     }
@@ -381,7 +416,7 @@ fun ListRow(
 
 @Composable
 fun Divider() {
-    Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFEDF0EE)))
+    Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)))
 }
 
 /** Mosaico de acceso rápido con iconografía consistente. */
@@ -402,9 +437,10 @@ fun Tile(text: String, color: Color, modifier: Modifier = Modifier, onClick: () 
         "finalidad" in titulo || "fines educativos" in titulo -> Icons.Outlined.School
         else -> Icons.Outlined.Dashboard
     }
-    Surface(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(22.dp), color = Color.White, shadowElevation = 3.dp,
+        Surface(
+        modifier = modifier.clickable(role = Role.Button, onClickLabel = "Abrir $text", onClick = onClick).animateContentSize(),
+        shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)), shadowElevation = 1.dp,
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -413,13 +449,13 @@ fun Tile(text: String, color: Color, modifier: Modifier = Modifier, onClick: () 
                 }
                 Text("›", color = color, fontSize = 28.sp, fontWeight = FontWeight.Medium)
             }
-            Text(text, color = Ink, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
+            Text(text, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 19.sp)
         }
     }
 }
 
 @Composable
-fun BottomBar(items: List<Pair<String, String>>, current: String?, onSelect: (String) -> Unit) {
+fun NovaBottomBar(items: List<Pair<String, String>>, current: String?, onSelect: (String) -> Unit) {
     fun icon(route: String) = when (route) {
         "inicio", "admin" -> Icons.Outlined.Home
         "ahorros", "a_ahorros" -> Icons.Outlined.Savings
@@ -430,23 +466,71 @@ fun BottomBar(items: List<Pair<String, String>>, current: String?, onSelect: (St
         "a_distribuir" -> Icons.Outlined.PieChart
         else -> Icons.Outlined.Dashboard
     }
-    Surface(color = Color.White, shadowElevation = 8.dp) {
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceAround) {
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 6.dp, vertical = 6.dp), horizontalArrangement = Arrangement.SpaceAround) {
             items.forEach { (route, label) ->
                 val activo = route == current
                 Column(
-                    Modifier
+                    Modifier.heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (activo) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent)
-                        .clickable { onSelect(route) }
+                        .clickable(role = Role.Tab, onClickLabel = label, onClick = { onSelect(route) })
                         .padding(horizontal = 10.dp, vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Icon(icon(route), contentDescription = label, tint = if (activo) MaterialTheme.colorScheme.primary else Muted, modifier = Modifier.size(24.dp))
+                    Icon(icon(route), contentDescription = label, tint = if (activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
                     Spacer(Modifier.height(3.dp))
-                    Text(label, fontSize = 11.sp, fontWeight = if (activo) FontWeight.Bold else FontWeight.Medium, color = if (activo) MaterialTheme.colorScheme.primary else Muted)
+                    Text(label, fontSize = 11.sp, fontWeight = if (activo) FontWeight.Bold else FontWeight.Medium, color = if (activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
     }
+}
+
+@Composable
+fun BottomBar(items: List<Pair<String, String>>, current: String?, onSelect: (String) -> Unit) =
+    NovaBottomBar(items, current, onSelect)
+
+/** Tarjeta de saldo para enfatizar datos reales recibidos por estado; nunca crea importes locales. */
+@Composable
+fun NovaBalanceCard(title: String, amount: String, supporting: String? = null, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(26.dp),
+        color = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary,
+    ) {
+        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.88f))
+            Text(amount, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold)
+            if (!supporting.isNullOrBlank()) Text(supporting, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f))
+        }
+    }
+}
+
+@Composable
+fun NovaEmptyState(title: String, message: String, modifier: Modifier = Modifier) {
+    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun NovaLoadingState(label: String = "Cargando información") {
+    Column(Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+fun NovaDialog(onDismiss: () -> Unit, title: String, content: @Composable ColumnScope.() -> Unit, actions: @Composable RowScope.() -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp), content = content) },
+        confirmButton = { Row(content = actions) },
+        shape = RoundedCornerShape(26.dp),
+    )
 }

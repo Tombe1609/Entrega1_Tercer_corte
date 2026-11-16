@@ -3,7 +3,7 @@ const config = require('../config/config');
 const AppError = require('../utils/AppError');
 const { confirmarEscritura } = require('../utils/validadores');
 const { siguientesIds, conReintentoDeId } = require('../utils/ids');
-const { ejecutarAtomico } = require('../utils/transaccion');
+const { ejecutarIdempotente } = require('../utils/idempotencia');
 const { redondear } = require('../utils/dinero');
 const {
   hoyColombia, fechaISOValida, fechaVencimientoColombia, sumarMesesCalendarioColombia, productoDentroDeVigencia,
@@ -113,13 +113,13 @@ async function solicitar({ usuario_id, fin_id, monto, plazo_meses = 1, fecha_pri
  * HU5: el funcionario aprueba y desembolsa una solicitud pendiente.
  * El préstamo, el saldo de ahorro y el movimiento se confirman juntos.
  */
-async function aprobar(prestamo_id, funcionario_id) {
+async function aprobar(prestamo_id, funcionario_id, idempotencia) {
   const prestamos = coleccion('prestamos');
   const ahorros = coleccion('ahorros');
   const movimientos = coleccion('movimientos_ahorro');
 
   return conReintentoDeId('movimiento_id', () =>
-    ejecutarAtomico(async ({ session, alDeshacer }) => {
+    ejecutarIdempotente(idempotencia, async ({ session, alDeshacer }) => {
       const solicitud = await obtenerPrestamo(prestamo_id, session);
       if (solicitud.estado !== 'pendiente') {
         throw new AppError(409, `El préstamo ${prestamo_id} ya no está pendiente de aprobación.`);
@@ -287,9 +287,9 @@ async function consultarDeEstudiante(usuario_id, { estado } = {}) {
 }
 
 /** Paga una cuota desde ahorros y registra el movimiento y cuota juntos. */
-async function pagarCuota(prestamo_id, numero, usuario_id) {
+async function pagarCuota(prestamo_id, numero, usuario_id, idempotencia) {
   const prestamos=coleccion('prestamos'), ahorros=coleccion('ahorros'), pagos=coleccion('pagos_prestamo'), movimientos=coleccion('movimientos_ahorro');
-  return conReintentoDeId(['pago_id','movimiento_id'],()=>ejecutarAtomico(async({session,alDeshacer})=>{
+  return conReintentoDeId(['pago_id','movimiento_id'],()=>ejecutarIdempotente(idempotencia,async({session,alDeshacer})=>{
     const p=await obtenerPrestamo(prestamo_id,session);
     if(p.usuario_id!==usuario_id) throw new AppError(403,'Este préstamo no pertenece a tu usuario.');
     if(p.estado!=='activo') throw new AppError(400,'El préstamo no está activo.');

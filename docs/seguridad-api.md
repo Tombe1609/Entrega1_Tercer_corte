@@ -3,7 +3,7 @@
 ## Rutas públicas
 
 - `GET /api/health`: estado del servicio y conexión a MongoDB.
-- `POST /api/auth/login`: valida credenciales y entrega un token Bearer con vencimiento de 8 horas.
+- `POST /api/auth/login`: valida credenciales y entrega un JWT estándar Bearer firmado con HS256, emisor y audiencia verificados y vencimiento de 8 horas.
 
 Todas las demás rutas exigen `Authorization: Bearer <token>` válido.
 
@@ -35,5 +35,7 @@ Usa una base de demostración recién inicializada; las historias crean document
 ## Sesión Android
 
 Android envía el Bearer guardado con cada solicitud. Si la API responde 401, la app elimina el token y los datos de sesión, vuelve al login y muestra un mensaje de sesión vencida. Un 403 conserva la sesión y presenta el mensaje de permiso denegado.
+
+El JWT contiene los claims estándar `sub`, `iat`, `exp`, `iss` y `aud`, más el rol y la versión de sesión necesarios para autorizar. No incluye correo ni otros datos personales. Un JWT firmado no está cifrado: el cliente puede leer sus claims, por eso el payload debe mantenerse mínimo. Al desplegar esta migración, los tokens del formato anterior dejan de ser válidos y las personas deberán iniciar sesión otra vez.
 
 `AUTH_TOKEN_SECRET` debe ser una cadena aleatoria privada en `.env` para despliegue. No uses la contraseña temporal ni el secreto de desarrollo en producción. La comunicación de producción debe usar HTTPS.

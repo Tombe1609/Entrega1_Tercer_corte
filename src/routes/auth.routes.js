@@ -53,7 +53,7 @@ router.post('/login', limitarLogin, asyncHandler(async (req, res) => {
     const cuenta = await coleccion('ahorros').findOne({ usuario_id: id }, { projection: { _id: 0, ahorro_id: 1 } });
     ahorro_id = cuenta?.ahorro_id || null;
   }
-  const token = firmarToken({ id, rol, email: persona.email, version_sesion: persona.version_sesion ?? 0 });
+  const token = firmarToken({ id, rol, version_sesion: persona.version_sesion ?? 0 });
   return ok(res, {
     rol, id, nombre: persona.nombre, email: persona.email,
     documento: persona.documento || null, telefono: persona.telefono || null,

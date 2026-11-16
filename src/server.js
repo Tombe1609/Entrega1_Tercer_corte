@@ -10,6 +10,10 @@ async function iniciar() {
       throw new Error('Producción requiere MongoDB con transacciones (replica set o clúster compatible).');
     }
     await indicesCuentas(db);
+    await db.collection('idempotency_keys').createIndex(
+      { scope: 1, key: 1 },
+      { unique: true, name: 'idempotencia_por_actor_y_operacion' },
+    );
   } catch (error) {
     console.error('No se pudo conectar con MongoDB:', error.message);
     console.error('Verifique que MongoDB esté en ejecución y que MONGODB_URI en .env sea correcta.');

@@ -1,6 +1,7 @@
 const servicio = require('../services/productos.service');
 const v = require('../utils/validadores');
 const { ok, creado } = require('../utils/respuestas');
+const { crearContextoIdempotencia } = require('../utils/idempotencia');
 const { hoyColombia, fechaISOValida } = require('../utils/fechas');
 async function listar(req, res) { const productos = await servicio.listar({ admin: ['funcionario','rector'].includes(req.auth.rol) }); return ok(res, { cantidad: productos.length, productos }); }
 async function crear(req, res) {
@@ -48,7 +49,7 @@ async function comprar(req, res) {
   const body=v.exigirCuerpo(req.body); const errores=[];
   const producto_id=v.texto(body,'producto_id',errores,{max:20}); const valor=v.montoPositivo(body,'valor',errores,{max:5000000});
   v.lanzarSiHayErrores(errores);
-  return creado(res, await servicio.comprar(req.auth.id,producto_id,valor), 'Compra pagada desde el saldo de ahorros.');
+  return creado(res, await servicio.comprar(req.auth.id,producto_id,valor,crearContextoIdempotencia(req)), 'Compra pagada desde el saldo de ahorros.');
 }
 async function misCompras(req,res){const compras=await servicio.comprasDe(req.auth.id);return ok(res,{cantidad:compras.length,compras},'Compras consultadas correctamente.');}
 module.exports={listar,crear,actualizar,cambiarEstado,comprar,misCompras};

@@ -1,19 +1,18 @@
-import java.net.URI
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// Se configura en las propiedades de Gradle del equipo o en CI.
-val releaseApiUrl = providers.gradleProperty("COOPERATIVA_API_URL")
-    .orElse(providers.environmentVariable("COOPERATIVA_API_URL"))
-    .map { it.trim().trimEnd('/') + "/" }
-val apiUrl = releaseApiUrl.orNull
-val apiUri = apiUrl?.let { runCatching { URI(it) }.getOrNull() }
-val validReleaseUrl = apiUri != null && apiUri.scheme == "https" && apiUri.host != null &&
-    apiUri.userInfo == null && apiUri.rawQuery == null && apiUri.rawFragment == null
+// La firma release toma sus secretos del entorno local/CI, nunca de archivos versionados.
+val releaseSigningValues = listOf(
+    providers.environmentVariable("COOPERATIVA_RELEASE_KEYSTORE").orNull,
+    providers.environmentVariable("COOPERATIVA_RELEASE_STORE_PASSWORD").orNull,
+    providers.environmentVariable("COOPERATIVA_RELEASE_KEY_ALIAS").orNull,
+    providers.environmentVariable("COOPERATIVA_RELEASE_KEY_PASSWORD").orNull,
+)
+val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
+val releaseSigningPartiallyConfigured = releaseSigningValues.any { !it.isNullOrBlank() } && !releaseSigningConfigured
 
 android {
     namespace = "com.cooperativa.app"
@@ -23,14 +22,25 @@ android {
         applicationId = "com.cooperativa.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 7
+        versionName = "1.5.1"
 
+    }
+
+    signingConfigs {
+        create("release") {
+            if (releaseSigningConfigured) {
+                storeFile = file(releaseSigningValues[0]!!)
+                storePassword = releaseSigningValues[1]
+                keyAlias = releaseSigningValues[2]
+                keyPassword = releaseSigningValues[3]
+            }
+        }
     }
 
     buildTypes {
         release {
-            resValue("string", "api_base_url", if (validReleaseUrl) apiUrl.orEmpty() else "")
+            if (releaseSigningConfigured) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -50,8 +60,8 @@ android {
 
 tasks.matching { it.name == "preReleaseBuild" }.configureEach {
     doFirst {
-        check(validReleaseUrl) {
-            "Configura COOPERATIVA_API_URL con la URL base HTTPS de la API desplegada."
+        check(!releaseSigningPartiallyConfigured) {
+            "Configura juntas las cuatro variables COOPERATIVA_RELEASE_* o elimina las variables incompletas."
         }
     }
 }
@@ -59,6 +69,8 @@ tasks.matching { it.name == "preReleaseBuild" }.configureEach {
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.09.00")
     implementation(composeBom)
+    // Animaciones sutiles de Compose para cambios de tamaño y transición entre estados.
+    implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")

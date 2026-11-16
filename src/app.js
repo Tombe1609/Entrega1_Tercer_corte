@@ -27,7 +27,7 @@ const allowedOrigins = new Set(config.corsOrigins.length || config.entorno === '
 app.use(cors({
   origin(origin, callback) { callback(null, !origin || allowedOrigins.has(origin)); },
   methods: ['GET', 'HEAD', 'POST', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key'],
   maxAge: 600,
 }));
 

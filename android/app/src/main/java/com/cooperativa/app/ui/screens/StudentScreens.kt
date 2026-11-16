@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -45,6 +46,8 @@ import com.cooperativa.app.ui.Fmt
 import com.cooperativa.app.ui.InfoBox
 import com.cooperativa.app.ui.LabelValue
 import com.cooperativa.app.ui.ListRow
+import com.cooperativa.app.ui.NovaBalanceCard
+import com.cooperativa.app.ui.NovaEmptyState
 import com.cooperativa.app.ui.MainViewModel
 import com.cooperativa.app.ui.MoneyField
 import com.cooperativa.app.ui.PrimaryButton
@@ -60,12 +63,7 @@ import com.cooperativa.app.ui.WarningBox
 import com.cooperativa.app.ui.historial
 import com.cooperativa.app.ui.montoDe
 import com.cooperativa.app.ui.periodoTexto
-import com.cooperativa.app.ui.theme.GreenText
-import com.cooperativa.app.ui.theme.Ink
-import com.cooperativa.app.ui.theme.Line
-import com.cooperativa.app.ui.theme.Muted
-import com.cooperativa.app.ui.theme.RedText
-import com.cooperativa.app.ui.theme.Teal
+import com.cooperativa.app.ui.theme.novaSuccessColor
 
 private fun StudentData.prestamoActivo(): PrestamoResumen? = prestamos.prestamos.firstOrNull { it.estado == "activo" }
 
@@ -76,8 +74,8 @@ private fun StudentData.ultimoPago(id: String): String =
 private fun SaldoHeader(st: UiState<StudentData>, etiqueta: String) {
     if (st is UiState.Success) {
         Spacer(Modifier.height(12.dp))
-        Text(etiqueta, color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-        Text(Fmt.money(st.data.cuenta.saldo), color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold)
+        Text(etiqueta, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
+        Text(Fmt.money(st.data.cuenta.saldo), color = MaterialTheme.colorScheme.onPrimary, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
@@ -94,9 +92,9 @@ fun HomeScreen(vm: MainViewModel, nav: NavController) {
     ScreenScaffold(
         title = "Hola, $nombre",
         subtitle = "Socio estudiante",
-        headerExtra = { SaldoHeader(st, "Saldo total de ahorros") },
     ) {
         StateContent(st, onRetry = { vm.cargarEstudiante() }) { d ->
+            NovaBalanceCard("Saldo total de ahorros", Fmt.money(d.cuenta.saldo))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AppCard(Modifier.weight(1f), onClick = { nav.navigate("prestamos") }) { LabelValue("Capital pendiente", Fmt.money(d.prestamos.totalCapitalPendiente)) }
                 AppCard(Modifier.weight(1f), onClick = { nav.navigate("intereses") }) {
@@ -116,8 +114,8 @@ fun HomeScreen(vm: MainViewModel, nav: NavController) {
                     }
                 }
             }
-            Text("¿Qué quieres hacer hoy?", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-            Text("Accesos directos a tus servicios", color = Muted, fontSize = 13.sp)
+            Text("¿Qué quieres hacer hoy?", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            Text("Accesos directos a tus servicios", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Tile("Depositar ahorro", MaterialTheme.colorScheme.secondary, Modifier.weight(1f)) { nav.navigate("depositar") }
                 Tile("Solicitar préstamo", MaterialTheme.colorScheme.primary, Modifier.weight(1f)) { nav.navigate("solicitar") }
@@ -133,20 +131,39 @@ fun HomeScreen(vm: MainViewModel, nav: NavController) {
                 Tile("Tienda", MaterialTheme.colorScheme.secondary, Modifier.weight(1f)) { nav.navigate("tienda") }
                 Tile("Transferir", MaterialTheme.colorScheme.primary, Modifier.weight(1f)) { nav.navigate("transferir") }
             }
+            Text("Actividad reciente", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            val recientes = d.historial().take(3)
+            if (recientes.isEmpty()) {
+                NovaEmptyState("Aún no hay movimientos", "Cuando realices una operación, aparecerá aquí.")
+            } else {
+                AppCard {
+                    recientes.forEachIndexed { index, movimiento ->
+                        if (index > 0) Divider()
+                        ListRow(
+                            title = movimiento.titulo,
+                            subtitle = "${Fmt.fechaHora(movimiento.fecha)} · ${movimiento.detalle}",
+                            trailing = Fmt.signed(movimiento.valor),
+                            trailingColor = if (movimiento.valor >= 0) novaSuccessColor() else MaterialTheme.colorScheme.error,
+                            badge = { StatusChip(movimiento.estado) },
+                        )
+                    }
+                }
+                SecondaryButton("Ver todos los movimientos") { nav.navigate("movimientos") }
+            }
         }
     }
 }
 
 @Composable
 private fun WarningBoxRow(label: String, fecha: String, valor: String, onClick: () -> Unit) {
-    Surface(shape = RoundedCornerShape(20.dp), color = com.cooperativa.app.ui.theme.CreamBg, modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.tertiaryContainer, modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(label, color = com.cooperativa.app.ui.theme.CreamText, fontSize = 14.sp)
-                Text(fecha, color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                Text("Toca para ver el préstamo", color = com.cooperativa.app.ui.theme.CreamText, fontSize = 12.sp)
+                Text(label, color = MaterialTheme.colorScheme.onTertiaryContainer, fontSize = 14.sp)
+                Text(fecha, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                Text("Toca para ver el préstamo", color = MaterialTheme.colorScheme.onTertiaryContainer, fontSize = 12.sp)
             }
-            Text(valor, color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            Text(valor, color = MaterialTheme.colorScheme.onTertiaryContainer, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
         }
     }
 }
@@ -168,7 +185,7 @@ fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
             if (st is UiState.Success) {
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Cuenta ${(st as UiState.Success<StudentData>).data.cuenta.ahorroId}", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                    Text("Cuenta ${(st as UiState.Success<StudentData>).data.cuenta.ahorroId}", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
                     StatusChip((st as UiState.Success<StudentData>).data.cuenta.estado.replaceFirstChar { it.uppercase() })
                 }
             }
@@ -186,19 +203,19 @@ fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
                         if (deudaVigente) "Para cerrar, primero cancela tus préstamos pendientes y deja el saldo de ahorro en \$0."
                         else if (d.cuenta.saldo != 0.0) "Para cerrar, retira los ${Fmt.money(d.cuenta.saldo)} disponibles y deja el saldo en \$0."
                         else "Tu cuenta puede cerrarse: no tiene saldo disponible ni préstamos pendientes.",
-                        color = Muted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 PrimaryButton("Cerrar cuenta de ahorro", enabled = !busy && !deudaVigente && d.cuenta.saldo == 0.0) {
                     confirmarCierre = true
                 }
             } else {
-                InfoBox { Text("Esta cuenta de ahorro está cerrada. Puedes consultar el historial, pero no hacer movimientos.", color = Muted) }
+                InfoBox { Text("Esta cuenta de ahorro está cerrada. Puedes consultar el historial, pero no hacer movimientos.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
-            Text("Historial", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            Text("Historial", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
             AppCard {
                 val ordenados = d.movimientos.sortedByDescending { Fmt.parse(it.fecha) ?: java.time.Instant.EPOCH }
-                if (ordenados.isEmpty()) Text("Aún no tienes movimientos de ahorro.", color = Muted)
+                if (ordenados.isEmpty()) Text("Aún no tienes movimientos de ahorro.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 var saldo = d.cuenta.saldo
                 ordenados.forEachIndexed { i, m ->
                     val dep = m.tipo == "deposito"
@@ -209,7 +226,7 @@ fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
                         subtitle = "${Fmt.fechaHora(m.fecha)} · ${m.descripcion.orEmpty()}",
                         extra = "Saldo: ${Fmt.money(saldo)}",
                         trailing = Fmt.signed(signed),
-                        trailingColor = if (dep) GreenText else RedText,
+                        trailingColor = if (dep) novaSuccessColor() else MaterialTheme.colorScheme.error,
                     )
                     saldo -= signed
                 }
@@ -248,7 +265,7 @@ fun DepositarScreen(vm: MainViewModel, nav: NavController) {
         DropdownField("Método de depósito", metodo, metodos, { metodo = metodos[it] })
         AppTextField("Descripción", desc, { desc = it })
         AppCard { LabelValue("Fecha", "Hoy · ${Fmt.fechaLarga(java.time.Instant.now().toString())}") }
-        InfoBox { RowLine("Nuevo saldo", Fmt.money(saldo + montoDe(monto)), Ink) }
+        InfoBox { RowLine("Nuevo saldo", Fmt.money(saldo + montoDe(monto)), MaterialTheme.colorScheme.onSurface) }
         ErrorText(error)
         PrimaryButton("Confirmar depósito", enabled = montoDe(monto) > 0, loading = busy) {
             vm.depositar(montoDe(monto), "${desc.trim()} · $metodo") { nav.popBackStack() }
@@ -289,19 +306,19 @@ fun PrestamosScreen(vm: MainViewModel, nav: NavController) {
     ScreenScaffold("Mis préstamos", "Préstamos educativos al 5% de interés") {
         PrimaryButton("Solicitar préstamo") { nav.navigate("solicitar") }
         StateContent(st, onRetry = { vm.cargarEstudiante() }) { d ->
-            if (d.prestamos.prestamos.isEmpty()) Text("Todavía no has solicitado préstamos.", color = Muted)
+            if (d.prestamos.prestamos.isEmpty()) Text("Todavía no has solicitado préstamos.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             d.prestamos.prestamos.sortedByDescending { it.prestamoId }.forEach { p ->
                 val activo = p.estado == "activo"
                 val pendiente = p.estado == "pendiente"
                 AppCard(onClick = { nav.navigate("prestamo/${p.prestamoId}") }) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(p.prestamoId, color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                        Text(p.prestamoId, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
                         StatusChip(
                             when (p.estado) { "pendiente" -> "Pendiente"; "activo" -> "Activo"; else -> p.estado.replaceFirstChar { it.uppercase() } },
                             when { activo -> ChipKind.GREEN; pendiente -> ChipKind.ORANGE; else -> ChipKind.GREY },
                         )
                     }
-                    Text("${p.finalidad ?: p.finId} · desde ${Fmt.fechaLarga(p.fechaSolicitud)}", color = Muted, fontSize = 14.sp)
+                    Text("${p.finalidad ?: p.finId} · desde ${Fmt.fechaLarga(p.fechaSolicitud)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     Spacer(Modifier.height(10.dp))
                     Row(Modifier.fillMaxWidth()) {
                         LabelValue(if (pendiente) "Monto solicitado" else "Monto inicial", Fmt.money(p.capitalInicial), Modifier.weight(1f))
@@ -334,13 +351,13 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
         headerExtra = {
             if (p != null) {
                 Spacer(Modifier.height(8.dp))
-                Text(if (p.estado == "pendiente") "Monto solicitado" else "Capital pendiente", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-                Text(Fmt.money(if (p.estado == "pendiente") p.capitalInicial else p.capitalPendiente), color = Color.White, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
+                Text(if (p.estado == "pendiente") "Monto solicitado" else "Capital pendiente", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
+                Text(Fmt.money(if (p.estado == "pendiente") p.capitalInicial else p.capitalPendiente), color = MaterialTheme.colorScheme.onPrimary, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold)
             }
         },
     ) {
         StateContent(st, onRetry = { vm.cargarEstudiante() }) { d ->
-            if (p == null) { Text("No se encontró el préstamo.", color = Muted); return@StateContent }
+            if (p == null) { Text("No se encontró el préstamo.", color = MaterialTheme.colorScheme.onSurfaceVariant); return@StateContent }
             val activo = p.estado == "activo"
             AppCard {
                 Row(Modifier.fillMaxWidth()) {
@@ -370,16 +387,30 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
                 WarningBox("Este préstamo histórico no tiene fecha de desembolso registrada. Confirma su soporte con un funcionario.")
             }
             if (activo) {
-                Text("Plan de cuotas", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                Text("Plan de cuotas", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                 if (p.cuotas.isEmpty()) {
                     WarningBox("Este préstamo no tiene un plan de cuotas registrado. Un funcionario debe completar el plazo y la fecha antes de que puedas pagar.")
                 } else {
+                    val cuotasPagadas = p.cuotas.count { it.estado == "pagada" }
+                    AppCard {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Progreso del préstamo", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                            Text("$cuotasPagadas de ${p.cuotas.size} cuotas", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        LinearProgressIndicator(
+                            progress = { cuotasPagadas.toFloat() / p.cuotas.size },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                    }
                     p.cuotas.forEach { cuota ->
                         val vencida = Fmt.cuotaVencida(cuota.fechaVencimiento)
                         val atrasada = Fmt.cuotaAtrasada(cuota.fechaVencimiento)
                         AppCard {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Cuota ${cuota.numero} · ${Fmt.fechaCuota(cuota.fechaVencimiento)}", color = Ink, fontWeight = FontWeight.Bold)
+                                Text("Cuota ${cuota.numero} · ${Fmt.fechaCuota(cuota.fechaVencimiento)}", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                                 StatusChip(
                                     when { cuota.estado == "pagada" -> "Pagada"; atrasada -> "Vencida"; vencida -> "Vence hoy"; else -> "Aún no vence" },
                                     when { cuota.estado == "pagada" -> ChipKind.GREEN; vencida -> ChipKind.ORANGE; else -> ChipKind.GREY },
@@ -392,17 +423,17 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
                                 if (vencida) {
                                     PrimaryButton("Pagar cuota desde ahorros") { vm.pagarCuota(id, cuota.numero) { vm.cargarEstudiante() } }
                                 } else {
-                                    Text("Podrás pagarla desde el ${Fmt.fechaCuota(cuota.fechaVencimiento)}. El interés total del préstamo ya está incluido en las cuotas.", color = Muted, fontSize = 13.sp)
+                                    Text("Podrás pagarla desde el ${Fmt.fechaCuota(cuota.fechaVencimiento)}. El interés total del préstamo ya está incluido en las cuotas.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                                 }
                             }
                         }
                     }
                 }
             }
-            Text("Últimos pagos", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+            Text("Últimos pagos", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
             val pagos = d.pagos[id].orEmpty().sortedByDescending { Fmt.parse(it.fecha) ?: java.time.Instant.EPOCH }
             AppCard {
-                if (pagos.isEmpty()) Text("Este préstamo aún no tiene pagos.", color = Muted)
+                if (pagos.isEmpty()) Text("Este préstamo aún no tiene pagos.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 pagos.take(2).forEachIndexed { i, pg ->
                     if (i > 0) Divider()
                     ListRow(
@@ -412,7 +443,7 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
                     )
                 }
             }
-            SecondaryButton("Ver pagos", color = Muted) { nav.navigate("pagos/$id") }
+            SecondaryButton("Ver pagos", color = MaterialTheme.colorScheme.onSurfaceVariant) { nav.navigate("pagos/$id") }
         }
     }
 }
@@ -424,20 +455,20 @@ fun HistorialPagosScreen(vm: MainViewModel, nav: NavController, id: String) {
     ScreenScaffold("Historial de pagos", "Préstamo $id", onBack = { nav.popBackStack() }) {
         StateContent(st, onRetry = { vm.cargarEstudiante() }) { d ->
             val pagos = d.pagos[id].orEmpty().sortedByDescending { Fmt.parse(it.fecha) ?: java.time.Instant.EPOCH }
-            if (pagos.isEmpty()) Text("Este préstamo aún no tiene pagos.", color = Muted)
+            if (pagos.isEmpty()) Text("Este préstamo aún no tiene pagos.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             pagos.forEach { pg ->
                 val cuota = pg.tipoAbono == "cuota"
                 val cap = pg.tipoAbono == "capital"
                 AppCard {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(pg.pagoId, color = Ink, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(pg.pagoId, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         StatusChip(if (cuota) "Cuota ${pg.cuotaNumero}" else if (cap) "Capital" else "Interés", if (cuota || cap) ChipKind.GREEN else ChipKind.ORANGE)
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(Fmt.money(pg.valor), color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
-                        Text(Fmt.fechaHora(pg.fecha), color = Muted, fontSize = 14.sp)
+                        Text(Fmt.money(pg.valor), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                        Text(Fmt.fechaHora(pg.fecha), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     }
-                    Text(if (cuota) "Pago de cuota desde ahorros" else if (cap) "Abono a capital" else "Pago de intereses", color = Muted, fontSize = 13.sp)
+                    Text(if (cuota) "Pago de cuota desde ahorros" else if (cap) "Abono a capital" else "Pago de intereses", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
             }
         }
@@ -453,8 +484,8 @@ fun InteresesScreen(vm: MainViewModel, nav: NavController) {
         headerExtra = {
             if (st is UiState.Success) {
                 Spacer(Modifier.height(10.dp))
-                Text("Total pendiente", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-                Text(Fmt.money((st as UiState.Success<StudentData>).data.prestamos.totalInteresPendiente), color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Total pendiente", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f), fontSize = 14.sp)
+                Text(Fmt.money((st as UiState.Success<StudentData>).data.prestamos.totalInteresPendiente), color = MaterialTheme.colorScheme.onPrimary, fontSize = 40.sp, fontWeight = FontWeight.ExtraBold)
             }
         },
         onBack = { nav.popBackStack() },
@@ -471,9 +502,9 @@ fun InteresesScreen(vm: MainViewModel, nav: NavController) {
                 RowLine("Periodo", Fmt.periodoTexto())
             }
             AppCard {
-                Text("Interés fijo del préstamo", color = Muted, fontSize = 14.sp)
-                Text(Fmt.money(d.prestamos.totalInteresPendiente), modifier = Modifier.padding(top = 6.dp), fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = Teal)
-                Text("Este valor ya está incluido en las cuotas pendientes; no se vuelve a calcular cada mes.", color = Muted, fontSize = 13.sp)
+                Text("Interés fijo del préstamo", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                Text(Fmt.money(d.prestamos.totalInteresPendiente), modifier = Modifier.padding(top = 6.dp), fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = MaterialTheme.colorScheme.primary)
+                Text("Este valor ya está incluido en las cuotas pendientes; no se vuelve a calcular cada mes.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             }
             WarningBox("El 5% se calcula una sola vez sobre el capital inicial y ya está incluido en el total del plan de cuotas.")
             if (activo != null) PrimaryButton("Ver plan de cuotas") { nav.navigate("prestamo/${activo.prestamoId}") }
@@ -497,7 +528,7 @@ fun SolicitarPrestamoScreen(vm: MainViewModel, nav: NavController, productoId:St
     val interes = Math.round(montoDe(monto) * 0.05 * 100) / 100.0
 
     ScreenScaffold("Solicitar préstamo", "Préstamo educativo · 5% de interés", onBack = { nav.popBackStack() }) {
-        if(producto!=null) AppCard { Text("Financiación para ${producto.nombre}",color=Ink,fontWeight=FontWeight.Bold); RowLine("Monto fijo",Fmt.money(producto.precio)) }
+        if(producto!=null) AppCard { Text("Financiación para ${producto.nombre}",color=MaterialTheme.colorScheme.onSurface,fontWeight=FontWeight.Bold); RowLine("Monto fijo",Fmt.money(producto.precio)) }
         else {
             MoneyField("Monto solicitado", monto, { monto = it })
             DropdownField("Propósito educativo", fines.getOrNull(finIndex)?.nombre.orEmpty(), fines.map { it.nombre }, { finIndex = it })
@@ -508,7 +539,7 @@ fun SolicitarPrestamoScreen(vm: MainViewModel, nav: NavController, productoId:St
             val capital=producto?.precio?:montoDe(monto); val interesCapital=Math.round(capital*0.05*100)/100.0
             RowLine("Monto solicitado", Fmt.money(capital))
             RowLine("Interés calculado (5%)", Fmt.money(interesCapital))
-            RowLine("Total estimado", Fmt.money(capital+interesCapital), Ink)
+            RowLine("Total estimado", Fmt.money(capital+interesCapital), MaterialTheme.colorScheme.onSurface)
         }
         WarningBox("El saldo de ahorros no cambiará hasta que un funcionario apruebe la solicitud.")
         ErrorText(error)
@@ -526,11 +557,11 @@ fun TiendaScreen(vm:MainViewModel,nav:NavController) {
         SecondaryButton("Mis compras") { nav.navigate("misCompras") }
         StateContent(st,onRetry={vm.cargarEstudiante()}) { d ->
             AppCard { LabelValue("Saldo disponible",Fmt.money(d.cuenta.saldo)) }
-            if(d.productos.isEmpty()) Text("Aún no hay productos publicados.",color=Muted)
+            if(d.productos.isEmpty()) Text("Aún no hay productos publicados.",color=MaterialTheme.colorScheme.onSurfaceVariant)
             d.productos.forEach { producto -> AppCard {
-                Text(producto.nombre,color=Ink,fontSize=20.sp,fontWeight=FontWeight.ExtraBold)
-                Text(producto.categoria,color=Teal,fontWeight=FontWeight.Bold)
-                if(producto.descripcion.isNotBlank()) Text(producto.descripcion,color=Muted)
+                Text(producto.nombre,color=MaterialTheme.colorScheme.onSurface,fontSize=20.sp,fontWeight=FontWeight.ExtraBold)
+                Text(producto.categoria,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.Bold)
+                if(producto.descripcion.isNotBlank()) Text(producto.descripcion,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 RowLine("Precio",Fmt.money(producto.precio))
                 producto.fechaFin?.let { RowLine("Disponible hasta",Fmt.fechaLarga("${it}T12:00:00Z")) }
                 ErrorText(error)
@@ -539,7 +570,7 @@ fun TiendaScreen(vm:MainViewModel,nav:NavController) {
                     PrimaryButton("Comprar con ahorros",enabled=d.cuenta.saldo>=producto.precio,loading=busy){vm.comprar(producto){}}
                     SecondaryButton("Solicitar préstamo para este producto"){nav.navigate("solicitarProducto/${producto.productoId}")}
                 }
-                if(d.cuenta.saldo<producto.precio) Text("Saldo insuficiente. Puedes solicitar un préstamo; la compra se hará después de que lo aprueben y desembolsen.",color=Muted)
+                if(d.cuenta.saldo<producto.precio) Text("Saldo insuficiente. Puedes solicitar un préstamo; la compra se hará después de que lo aprueben y desembolsen.",color=MaterialTheme.colorScheme.onSurfaceVariant)
             } }
         }
     }
@@ -551,9 +582,9 @@ fun MisComprasScreen(vm:MainViewModel,nav:NavController) {
     LaunchedEffect(Unit){vm.cargarEstudiante()}
     ScreenScaffold("Mis compras","Historial de productos adquiridos",onBack={nav.popBackStack()}) {
         StateContent(st,onRetry={vm.cargarEstudiante()}) { d ->
-            if(d.compras.isEmpty()) AppCard { Text("Aún no tienes compras registradas.",color=Muted) }
+            if(d.compras.isEmpty()) AppCard { Text("Aún no tienes compras registradas.",color=MaterialTheme.colorScheme.onSurfaceVariant) }
             d.compras.sortedByDescending { it.fecha.orEmpty() }.forEach { compra -> AppCard {
-                Text(compra.nombreProducto,color=Ink,fontWeight=FontWeight.ExtraBold,fontSize=18.sp)
+                Text(compra.nombreProducto,color=MaterialTheme.colorScheme.onSurface,fontWeight=FontWeight.ExtraBold,fontSize=18.sp)
                 RowLine("Fecha",Fmt.fechaLarga(compra.fecha))
                 RowLine("Valor",Fmt.money(compra.valor))
                 StatusChip(if(compra.estado=="pagada")"Pagada" else compra.estado.replaceFirstChar{it.uppercase()},if(compra.estado=="pagada")ChipKind.GREEN else ChipKind.GREY)
@@ -589,7 +620,7 @@ fun GestionCatalogoScreen(vm:MainViewModel,nav:NavController) {
     LaunchedEffect(Unit){vm.cargarAdmin()}
     ScreenScaffold("Catálogo","Administra artículos, cursos y servicios",onBack={nav.popBackStack()}) {
         AppCard {
-            Text(productoEditando?.let { "Editando: ${it.nombre}" } ?: "Nueva publicación",color=Ink,fontSize=18.sp,fontWeight=FontWeight.ExtraBold)
+            Text(productoEditando?.let { "Editando: ${it.nombre}" } ?: "Nueva publicación",color=MaterialTheme.colorScheme.onSurface,fontSize=18.sp,fontWeight=FontWeight.ExtraBold)
             AppTextField("Nombre",nombre,{nombre=it}); AppTextField("Categoría",categoria,{categoria=it},placeholder="Curso, libro, asesoría…")
             AppTextField("Descripción",descripcion,{descripcion=it},singleLine=false); MoneyField("Precio",precio,{precio=it})
             DatePickerField("Disponible desde (opcional)",fechaInicio,{fechaInicio=it})
@@ -611,15 +642,15 @@ fun GestionCatalogoScreen(vm:MainViewModel,nav:NavController) {
                 val vigente=p.estado=="activo"&&!vencido&&(p.fechaInicio==null||p.fechaInicio<=hoy)
                 when(filtro){"Vigentes"->vigente;"Vencidos"->vencido;"Cerrados"->p.estado=="inactivo";else->true}
             }
-            if(lista.isEmpty()) Text("No hay productos en este estado.",color=Muted)
+            if(lista.isEmpty()) Text("No hay productos en este estado.",color=MaterialTheme.colorScheme.onSurfaceVariant)
             lista.forEach { p ->
                 val hoyActual=Fmt.hoyColombia(); val vencido=p.fechaFin!=null&&p.fechaFin<hoyActual&&p.estado=="activo"; val dentroPeriodo=(p.fechaInicio==null||p.fechaInicio<=hoyActual)&&(p.fechaFin==null||p.fechaFin>=hoyActual); val vigente=p.estado=="activo"&&dentroPeriodo
                 AppCard {
-                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){Text(p.nombre,color=Ink,fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f));StatusChip(when{vencido->"Vencido";vigente->"Vigente";p.estado=="inactivo"->"Cerrado";else->"Programado"},when{vigente->ChipKind.GREEN;else->ChipKind.ORANGE})}
-                    Text("${p.categoria} · ${Fmt.money(p.precio)}",color=Muted)
-                    p.fechaFin?.let{Text("Disponible hasta ${Fmt.fechaLarga("${it}T12:00:00Z")}",color=Muted,fontSize=13.sp)}
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){Text(p.nombre,color=MaterialTheme.colorScheme.onSurface,fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f));StatusChip(when{vencido->"Vencido";vigente->"Vigente";p.estado=="inactivo"->"Cerrado";else->"Programado"},when{vigente->ChipKind.GREEN;else->ChipKind.ORANGE})}
+                    Text("${p.categoria} · ${Fmt.money(p.precio)}",color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    p.fechaFin?.let{Text("Disponible hasta ${Fmt.fechaLarga("${it}T12:00:00Z")}",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=13.sp)}
                     if(p.estado=="activo"||dentroPeriodo) SecondaryButton(if(p.estado=="activo")"Cerrar publicación" else "Reactivar publicación"){vm.cambiarEstadoProducto(p.productoId,if(p.estado=="activo")"inactivo" else "activo")}
-                    else Text("Solo se puede reactivar durante su periodo de disponibilidad.",color=Muted,fontSize=13.sp)
+                    else Text("Solo se puede reactivar durante su periodo de disponibilidad.",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=13.sp)
                     SecondaryButton("Editar publicación") {
                         productoEditando=p
                         nombre=p.nombre;categoria=p.categoria;descripcion=p.descripcion;precio=p.precio.toString().removeSuffix(".0")
@@ -646,24 +677,24 @@ fun MovimientosScreen(vm: MainViewModel, nav: NavController) {
                 .forEach { (texto, cat) ->
                     val activo = filtro == cat
                     Surface(
-                        shape = RoundedCornerShape(50), color = if (activo) Teal else Color.White,
+                        shape = RoundedCornerShape(50), color = if (activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                         modifier = Modifier.clickable { filtro = cat },
                     ) {
-                        Text(texto, color = if (activo) Color.White else Teal, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
+                        Text(texto, color = if (activo) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
                     }
                 }
         }
         StateContent(st, onRetry = { vm.cargarEstudiante() }) { d ->
             val lista = d.historial().filter { filtro == null || it.categoria == filtro }
             AppCard {
-                if (lista.isEmpty()) Text("No hay movimientos para mostrar.", color = Muted)
+                if (lista.isEmpty()) Text("No hay movimientos para mostrar.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 lista.forEachIndexed { i, m ->
                     if (i > 0) Divider()
                     ListRow(
                         title = m.titulo,
                         subtitle = "${Fmt.fechaHora(m.fecha)} · ${m.detalle}",
                         trailing = Fmt.signed(m.valor),
-                        trailingColor = if (m.valor >= 0) GreenText else RedText,
+                        trailingColor = if (m.valor >= 0) novaSuccessColor() else MaterialTheme.colorScheme.error,
                         badge = { StatusChip(m.estado) },
                     )
                 }
@@ -699,14 +730,14 @@ fun PerfilScreen(vm: MainViewModel, onCambiarPassword: () -> Unit, onLogout: () 
             RowLine("Tipo de usuario", (s?.rol ?: "").replaceFirstChar { it.uppercase() })
             Divider()
             Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Estado de la cuenta", color = Muted, fontSize = 14.sp)
+                Text("Estado de la cuenta", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 StatusChip((s?.estado ?: "activo").replaceFirstChar { it.uppercase() })
             }
         }
         PrimaryButton("Editar información") { vm.limpiarError(); passwordActual = ""; editar = true }
         SecondaryButton("Cambiar contraseña", onClick = onCambiarPassword)
         Text(
-            "Cerrar sesión", color = RedText, fontWeight = FontWeight.Bold, fontSize = 17.sp,
+            "Cerrar sesión", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, fontSize = 17.sp,
             modifier = Modifier.fillMaxWidth().clickable { onLogout() }.padding(16.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )

@@ -40,7 +40,7 @@ Edite `.env` (ver `.env.example`):
 | `DB_NAME` | Base de datos | `cooperativa_universitaria` |
 | `NODE_ENV` | `production` oculta detalles de errores internos | `development` |
 | `LIMITE_PRESTAMO` | Monto máximo por préstamo | `5000000` |
-| `AUTH_TOKEN_SECRET` | Secreto privado para firmar tokens de sesión | Obligatorio en producción; usa una cadena aleatoria larga |
+| `AUTH_TOKEN_SECRET` | Secreto privado para firmar JWT de sesión HS256 | Obligatorio en producción; usa una cadena aleatoria de al menos 32 bytes |
 
 El archivo `.env` está en `.gitignore`: no se sube a GitHub. Guarde allí la URI de Atlas y no comparta credenciales.
 
@@ -96,11 +96,13 @@ La API usa MongoDB como persistencia, con las colecciones y relaciones descritas
 
 La autenticación obligatoria, propiedad de recursos y permisos por rol se describen en [`docs/seguridad-api.md`](docs/seguridad-api.md). Solo `/api/health` y `POST /api/auth/login` son públicos.
 
+Las operaciones que mueven dinero requieren el encabezado `Idempotency-Key` (UUID). La misma clave y el mismo contenido devuelven el resultado original sin volver a descontar o acreditar; usar la clave con otro contenido devuelve `409`. Android y web conservan la clave de una operación cuyo resultado no pudieron confirmar. Alcance y ejemplo: [`docs/IDEMPOTENCIA.md`](docs/IDEMPOTENCIA.md).
+
 Las **10 funcionalidades** que se demuestran son HU1-HU10 (detalle y guía en [`docs/historias-usuario.md`](docs/historias-usuario.md)). Los endpoints marcados "apoyo" solo complementan esas funcionalidades.
 
 | HU | Método | Endpoint | Descripción | Códigos |
 |---|---|---|---|---|
-| - | POST | `/api/auth/login` | Iniciar sesión y obtener token Bearer | 200, 400, 401 |
+| - | POST | `/api/auth/login` | Iniciar sesión y obtener JWT Bearer (expira en 8 horas) | 200, 400, 401 |
 | - | PATCH | `/api/auth/password` | Cambiar la contraseña de la cuenta autenticada con `password_actual` y `password_nueva`; invalida sus sesiones anteriores | 200, 400, 401, 403, 409, 429 |
 | 1 | POST | `/api/estudiantes` | Registrar estudiante (id U### automático) | 201, 400, 409 |
 | 1 | GET | `/api/estudiantes?estado=` | Listar estudiantes | 200, 400 |

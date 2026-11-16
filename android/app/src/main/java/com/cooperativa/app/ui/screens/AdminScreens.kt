@@ -51,10 +51,7 @@ import com.cooperativa.app.ui.WarningBox
 import com.cooperativa.app.ui.Tile
 import com.cooperativa.app.ui.UiState
 import com.cooperativa.app.ui.montoDe
-import com.cooperativa.app.ui.theme.GreenText
-import com.cooperativa.app.ui.theme.Ink
-import com.cooperativa.app.ui.theme.Muted
-import com.cooperativa.app.ui.theme.RedText
+import com.cooperativa.app.ui.theme.novaSuccessColor
 
 val CARGOS = listOf(
     "Director financiero", "Asesor de créditos", "Tesorero",
@@ -82,14 +79,14 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
         title = "Hola, $nombre",
         subtitle = if (esRector) "Panel del rector · Control general" else "Panel del funcionario · Gestión diaria",
     ) {
-        Text(if (esRector) "COOPERATIVA · DIRECCIÓN" else "COOPERATIVA · OPERACIONES", color = Color.White.copy(alpha = 0.78f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text(if (esRector) "COOPERATIVA · DIRECCIÓN" else "COOPERATIVA · OPERACIONES", color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.88f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         if (esFinanzas) StateContent(st, onRetry = { vm.cargarAdmin() }) { d ->
             val s = d.stats
             val activos = s.prestamos?.porEstado?.firstOrNull { it.estado == "activo" }?.cantidad ?: 0
             val pendientes = s.prestamos?.porEstado?.firstOrNull { it.estado == "pendiente" }?.cantidad ?: 0
             val pagados = s.prestamos?.porEstado?.firstOrNull { it.estado == "pagado" }?.cantidad ?: 0
-            Text("Resumen de la cooperativa", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
-            Text("Indicadores generales", color = Muted, fontSize = 13.sp)
+            Text("Resumen de la cooperativa", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 19.sp)
+            Text("Indicadores generales", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AppCard(Modifier.weight(1f)) { LabelValue("Total de usuarios", "${s.estudiantes?.cantidad ?: 0}", valueColor = MaterialTheme.colorScheme.primary) }
                 AppCard(Modifier.weight(1f)) { LabelValue("Total de ahorros", Fmt.money(s.ahorros?.totalAhorrado ?: 0.0), valueColor = MaterialTheme.colorScheme.primary) }
@@ -104,8 +101,8 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
             }
             AppCard { LabelValue("Solicitudes por aprobar", "$pendientes", valueColor = MaterialTheme.colorScheme.secondary) }
         }
-        Text("Accesos rápidos", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-        Text("Selecciona un módulo para continuar", color = Muted, fontSize = 13.sp)
+        Text("Accesos rápidos", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+        Text("Selecciona un módulo para continuar", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         val tiles = buildList {
             if (esFinanzas) {
                 add("Usuarios y datos" to "a_usuarios")
@@ -136,7 +133,7 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
             }
         }
         SecondaryButton("Cambiar contraseña") { nav.navigate("cambiarPassword") }
-        SecondaryButton("Cerrar sesión", color = RedText) { onLogout() }
+        SecondaryButton("Cerrar sesión", color = MaterialTheme.colorScheme.error) { onLogout() }
     }
 }
 
@@ -154,14 +151,14 @@ fun SolicitudesCuentaScreen(vm: MainViewModel, nav: NavController) {
     LaunchedEffect(Unit) { vm.cargarSolicitudes() }
     ScreenScaffold("Solicitudes de cuenta", "Miguel revisa y decide cada solicitud", onBack = { nav.popBackStack() }) {
         StateContent(solicitudes, onRetry = { vm.cargarSolicitudes() }) { lista ->
-            if (lista.isEmpty()) InfoBox { Text("No hay solicitudes pendientes.", color = Muted) }
+            if (lista.isEmpty()) InfoBox { Text("No hay solicitudes pendientes.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             lista.forEach { s ->
                 AppCard {
-                    Text(s.nombre, color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                    Text("Documento: ${s.documento}", color = Muted)
-                    Text("Correo: ${s.email}", color = Muted)
-                    Text("Teléfono: ${s.telefono}", color = Muted)
-                    Text("Recibida: ${Fmt.fechaHora(s.fecha)}", color = Muted, fontSize = 12.sp)
+                    Text(s.nombre, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text("Documento: ${s.documento}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Correo: ${s.email}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Teléfono: ${s.telefono}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Recibida: ${Fmt.fechaHora(s.fecha)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     SecondaryButton("Editar datos") {
                         editando = s
                         editNombre = s.nombre
@@ -180,7 +177,7 @@ fun SolicitudesCuentaScreen(vm: MainViewModel, nav: NavController) {
         onDismissRequest = { if (!busy) editando = null },
         title = { Text("Editar solicitud") },
         text = { Column {
-            Text("Corrige los datos antes de crear la cuenta.", color = Muted)
+            Text("Corrige los datos antes de crear la cuenta.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             AppTextField("Nombre completo", editNombre, { editNombre = it })
             AppTextField("Documento", editDocumento, { editDocumento = it.filter(Char::isDigit) }, keyboard = KeyboardType.Number)
             AppTextField("Teléfono", editTelefono, { editTelefono = it.filter(Char::isDigit) }, keyboard = KeyboardType.Phone)
@@ -207,17 +204,17 @@ fun AuditoriaCuentasScreen(vm: MainViewModel, nav: NavController) {
     LaunchedEffect(Unit) { vm.cargarAuditoria() }
     ScreenScaffold("Auditoría de datos", "Cambios de correo, teléfono y contraseña", onBack = { nav.popBackStack() }) {
         StateContent(auditoria, onRetry = { vm.cargarAuditoria() }) { eventos ->
-            if (eventos.isEmpty()) InfoBox { Text("Todavía no hay cambios personales registrados.", color = Muted) }
+            if (eventos.isEmpty()) InfoBox { Text("Todavía no hay cambios personales registrados.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             eventos.forEach { evento -> AppCard {
-                Text("${evento.accion.replace('_', ' ').replaceFirstChar { it.uppercase() }} · ${evento.usuarioId}", color = Ink, fontWeight = FontWeight.Bold)
-                Text("${Fmt.fechaHora(evento.fecha)} · Actor ${evento.actorId} (${evento.actorRol})", color = Muted, fontSize = 12.sp)
+                Text("${evento.accion.replace('_', ' ').replaceFirstChar { it.uppercase() }} · ${evento.usuarioId}", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                Text("${Fmt.fechaHora(evento.fecha)} · Actor ${evento.actorId} (${evento.actorRol})", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                 evento.cambios.forEach { c ->
                     val valores = if (c.campo == "password") "valor protegido" else "${c.anterior ?: "—"} → ${c.nuevo ?: "—"}"
-                    Text("${c.campo}: $valores", color = Muted)
+                    Text("${c.campo}: $valores", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } }
         }
-        InfoBox { Text("Las contraseñas nunca se muestran ni se guardan en texto legible. Los movimientos de dinero se consultan en su módulo separado.", color = Muted) }
+        InfoBox { Text("Las contraseñas nunca se muestran ni se guardan en texto legible. Los movimientos de dinero se consultan en su módulo separado.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 
@@ -239,16 +236,16 @@ fun AdminUsuariosScreen(vm: MainViewModel, nav: NavController) {
             val lista = d.estudiantes.filter {
                 busqueda.isBlank() || it.nombre.contains(busqueda, true) || it.documento.contains(busqueda)
             }
-            if (lista.isEmpty()) Text("No se encontraron usuarios.", color = Muted)
+            if (lista.isEmpty()) Text("No se encontraron usuarios.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             lista.forEach { u ->
                 val saldo = d.cuentas.firstOrNull { it.usuarioId == u.usuarioId }?.saldo
                 AppCard {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(u.nombre, color = Ink, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
+                        Text(u.nombre, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
                         StatusChip(u.estado.replaceFirstChar { it.uppercase() }, if (u.estado == "activo") ChipKind.GREEN else ChipKind.ORANGE)
                     }
-                    Text("Doc. ${u.documento} · ${u.telefono}", color = Muted, fontSize = 14.sp)
-                    Text("${u.email} · Socio estudiante", color = Muted, fontSize = 14.sp)
+                    Text("Doc. ${u.documento} · ${u.telefono}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                    Text("${u.email} · Socio estudiante", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     Spacer(Modifier.height(10.dp))
                     SecondaryButton(if (seleccionado == u.usuarioId) "Ocultar" else "Ver todo") {
                         seleccionado = if (seleccionado == u.usuarioId) null else u.usuarioId
@@ -294,11 +291,11 @@ fun AdminFuncionariosScreen(vm: MainViewModel, nav: NavController) {
             d.funcionarios.forEach { f ->
                 AppCard {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(f.nombre, color = Ink, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
+                        Text(f.nombre, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
                         StatusChip(f.estado.replaceFirstChar { it.uppercase() }, if (f.estado == "activo") ChipKind.GREEN else ChipKind.ORANGE)
                     }
-                    Text("${f.funcionarioId} · ${f.cargo}", color = Muted, fontSize = 14.sp)
-                    Text("${f.email} · ${f.telefono}", color = Muted, fontSize = 14.sp)
+                    Text("${f.funcionarioId} · ${f.cargo}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
+                    Text("${f.email} · ${f.telefono}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 }
             }
         }
@@ -347,7 +344,7 @@ fun GestionCuentasAccesoScreen(vm: MainViewModel, nav: NavController) {
             Spacer(Modifier.height(4.dp))
             Text(
                 "La contraseña se guarda mediante un hash seguro. Comunica la contraseña inicial al usuario por un canal seguro y pídele cambiarla cuando esté disponible esa función.",
-                color = Muted, fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp,
             )
         }
         ErrorText(error)
@@ -429,7 +426,7 @@ fun AdminMovimientosAhorroScreen(vm: MainViewModel, nav: NavController, tipo: St
             val lista = d.movimientos.filter { tipo == null || it.tipo == tipo }
                 .sortedByDescending { Fmt.parse(it.fecha) ?: java.time.Instant.EPOCH }
             AppCard {
-                if (lista.isEmpty()) Text("No hay registros.", color = Muted)
+                if (lista.isEmpty()) Text("No hay registros.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 lista.forEachIndexed { i, m ->
                     val dep = m.tipo == "deposito"
                     if (i > 0) Divider()
@@ -438,7 +435,7 @@ fun AdminMovimientosAhorroScreen(vm: MainViewModel, nav: NavController, tipo: St
                         subtitle = "${d.nombreDe(m.usuarioId)} · ${Fmt.fechaHora(m.fecha)}",
                         extra = m.descripcion,
                         trailing = Fmt.signed(if (dep) m.valor else -m.valor),
-                        trailingColor = if (dep) GreenText else RedText,
+                        trailingColor = if (dep) novaSuccessColor() else MaterialTheme.colorScheme.error,
                     )
                 }
             }
@@ -462,13 +459,13 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
                 val pendiente = p.estado == "pendiente"
                 AppCard {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("${p.prestamoId} · ${pa.nombre}", color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f))
+                        Text("${p.prestamoId} · ${pa.nombre}", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f))
                         StatusChip(
                             when (p.estado) { "pendiente" -> "Pendiente"; "activo" -> "Activo"; else -> p.estado.replaceFirstChar { it.uppercase() } },
                             when { pendiente -> ChipKind.ORANGE; p.estado == "activo" -> ChipKind.GREEN; else -> ChipKind.GREY },
                         )
                     }
-                    Text("${p.finalidad ?: p.finId} · ${Fmt.fechaLarga(p.fechaSolicitud)}", color = Muted, fontSize = 13.sp)
+                    Text("${p.finalidad ?: p.finId} · ${Fmt.fechaLarga(p.fechaSolicitud)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth()) {
                         LabelValue(if (pendiente) "Monto solicitado" else "Monto inicial", Fmt.money(p.capitalInicial), Modifier.weight(1f))
@@ -476,7 +473,7 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
                     }
                     Spacer(Modifier.height(6.dp))
                     if (pendiente) {
-                        Text("El saldo de ahorro no cambia hasta aprobar el desembolso.", color = Muted, fontSize = 13.sp)
+                        Text("El saldo de ahorro no cambia hasta aprobar el desembolso.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                         Spacer(Modifier.height(10.dp))
                         PrimaryButton("Revisar y aprobar solicitud") {
                             vm.limpiarError()
@@ -485,7 +482,7 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
                         SecondaryButton("Rechazar solicitud") { vm.limpiarError(); motivoRechazo = ""; solicitudRechazar = pa }
                     } else {
                         LabelValue("Interés pendiente", Fmt.money(p.interesPendiente))
-                        p.fechaDesembolso?.let { Text("Desembolsado: ${Fmt.fechaLarga(it)}", color = Muted, fontSize = 13.sp) }
+                        p.fechaDesembolso?.let { Text("Desembolsado: ${Fmt.fechaLarga(it)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp) }
                         if (p.estado == "activo" && p.fechaDesembolso == null) {
                             Spacer(Modifier.height(8.dp))
                             WarningBox("Falta la fecha de desembolso histórica. Verifica el soporte antes de conciliar este préstamo.")
@@ -505,7 +502,7 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Se acreditarán ${Fmt.money(solicitud.prestamo.capitalInicial)} a la cuenta de ahorro de ${solicitud.nombre} y se guardará el movimiento en MongoDB.")
-                        error?.let { Text(it, color = RedText) }
+                        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                     }
                 },
                 confirmButton = {
@@ -546,7 +543,7 @@ fun AdminPagosScreen(vm: MainViewModel, nav: NavController) {
         StateContent(st, onRetry = { vm.cargarAdmin() }) { d ->
             val lista = d.pagos.sortedByDescending { Fmt.parse(it.fecha) ?: java.time.Instant.EPOCH }
             AppCard {
-                if (lista.isEmpty()) Text("No hay pagos registrados.", color = Muted)
+                if (lista.isEmpty()) Text("No hay pagos registrados.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 lista.forEachIndexed { i, pg ->
                     if (i > 0) Divider()
                     val cuota = pg.tipoAbono == "cuota"
@@ -571,7 +568,7 @@ fun AdminInteresesScreen(vm: MainViewModel, nav: NavController) {
             InfoBox { RowLine("Total pendiente", Fmt.money(d.prestamos.filter { it.prestamo.estado == "activo" }.sumOf { it.prestamo.interesPendiente })) }
             AppCard {
                 val activos = d.prestamos.filter { it.prestamo.estado == "activo" }
-                if (activos.isEmpty()) Text("No hay préstamos activos.", color = Muted)
+                if (activos.isEmpty()) Text("No hay préstamos activos.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 activos.forEachIndexed { i, pa ->
                     if (i > 0) Divider()
                     ListRow(
@@ -629,12 +626,12 @@ fun DistribuirInteresesScreen(vm: MainViewModel, nav: NavController) {
                         title = d?.nombreDe(x.usuarioId) ?: x.usuarioId,
                         subtitle = "${Fmt.porcentaje(x.participacion)} de los ahorros",
                         trailing = Fmt.money(x.interesRecibido),
-                        trailingColor = GreenText,
+                        trailingColor = novaSuccessColor(),
                     )
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Fecha: ${Fmt.finDeMes(periodo)} · ${c.cantidadAhorradores} beneficiarios", color = Muted, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                Text("Fecha: ${Fmt.finDeMes(periodo)} · ${c.cantidadAhorradores} beneficiarios", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 StatusChip("Pendiente", ChipKind.ORANGE)
             }
             ErrorText(error)

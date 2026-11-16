@@ -1,6 +1,7 @@
 const servicio = require('../services/prestamos.service');
 const v = require('../utils/validadores');
 const { ok, creado } = require('../utils/respuestas');
+const { crearContextoIdempotencia } = require('../utils/idempotencia');
 
 /** GET /api/fines-educativos  (apoyo de HU5: finalidades válidas) */
 async function listarFines(req, res) {
@@ -32,7 +33,7 @@ async function solicitar(req, res) {
 /** POST /api/prestamos/:prestamo_id/aprobar (HU5) */
 async function aprobar(req, res) {
   const id = v.idParametro(req.params.prestamo_id, 'prestamo', 'prestamo_id');
-  const resultado = await servicio.aprobar(id, req.auth.id);
+  const resultado = await servicio.aprobar(id, req.auth.id, crearContextoIdempotencia(req));
   return ok(res, resultado, 'Préstamo aprobado y desembolsado correctamente.');
 }
 
@@ -52,7 +53,7 @@ async function pagarCuota(req,res) {
   const id=v.idParametro(req.params.prestamo_id,'prestamo','prestamo_id');
   const numero=Number(req.params.numero);
   if(!Number.isInteger(numero)||numero<1) throw new (require('../utils/AppError'))(400,'El número de cuota no es válido.');
-  return creado(res,await servicio.pagarCuota(id,numero,req.auth.id),'Cuota pagada desde ahorros correctamente.');
+  return creado(res,await servicio.pagarCuota(id,numero,req.auth.id,crearContextoIdempotencia(req)),'Cuota pagada desde ahorros correctamente.');
 }
 
 /** GET /api/prestamos/:prestamo_id/pagos  (HU8) */

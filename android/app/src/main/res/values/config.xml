@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- URL única de la API desplegada en Render para debug y release. -->
+    <string name="api_base_url" translatable="false">https://cooperativa-api-m37c.onrender.com/</string>
+</resources>

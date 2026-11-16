@@ -26,9 +26,9 @@ Esta es la estructura existente; una siguiente mejora será separar `MainViewMod
 
 ## URL de la API
 
-La variante `debug` utiliza `http://10.0.2.2:3000/` desde el emulador y permite cambiar el servidor desde el login. Para generar el APK `release` con HTTPS, consulta [APK de entrega](README.md#apk-de-entrega).
+Todas las variantes (`debug` y `release`) utilizan `https://cooperativa-api-m37c.onrender.com/`, definida en `app/src/main/res/values/config.xml`. Android no utiliza una dirección local ni permite cambiar el servidor desde el login.
 
-La dirección local no es adecuada para la entrega final. Configura la URL HTTPS del backend una vez desplegado. La app permite cambiarla desde login; si se va a publicar el APK, la URL de producción debe quedar como configuración recomendada.
+Si cambia el dominio del backend, actualiza ese recurso y vuelve a compilar la app. La migración de tokens a JWT no cambia la interfaz Bearer; al publicar la API nueva, las sesiones antiguas deberán iniciar sesión de nuevo.
 
 ## Recorrido de datos
 
@@ -37,7 +37,7 @@ Pantalla Compose → MainViewModel → Repository → ApiClient (Retrofit/OkHttp
 → API Express → rutas → controladores/servicios → MongoDB
 ```
 
-El token se guarda en `SharedPreferences` y OkHttp lo envía en `Authorization: Bearer ...`. La API valida el token y controla los permisos por rol y propietario. Si recibe 401, Android elimina la sesión y regresa al login; un 403 conserva la sesión y muestra el rechazo de permiso.
+El JWT Bearer se guarda localmente y OkHttp lo envía en `Authorization: Bearer ...`. La API valida su firma y vencimiento, y controla permisos por rol y propietario. Si recibe 401, Android elimina la sesión y regresa al login; un 403 conserva la sesión y muestra el rechazo de permiso.
 
 ## Navegación visible actual
 
@@ -47,7 +47,7 @@ El perfil de estudiante muestra Inicio, Ahorros, Préstamos, Movimientos y Perfi
 
 1. Inicia la API y verifica `/api/health` desde el equipo anfitrión.
 2. Abre el proyecto en Android Studio y espera la sincronización de Gradle.
-3. En un emulador, utiliza `http://10.0.2.2:3000/`; en teléfono físico, utiliza la IP local del computador.
+3. Ejecuta o instala la app; se conectará a Render desde el emulador o un teléfono físico.
 4. Inicia sesión con una cuenta de demostración configurada en el backend.
 
-Para uso final, la API debe estar desplegada en la nube según los requisitos del curso y configurada con HTTPS.
+La app requiere que Render esté activo y conectado a MongoDB Atlas.
