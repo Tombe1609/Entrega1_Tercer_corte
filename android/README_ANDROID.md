@@ -26,9 +26,15 @@ Esta es la estructura existente; una siguiente mejora será separar `MainViewMod
 
 ## URL de la API
 
-Todas las variantes (`debug` y `release`) utilizan `https://cooperativa-api-m37c.onrender.com/`, definida en `app/src/main/res/values/config.xml`. Android no utiliza una dirección local ni permite cambiar el servidor desde el login.
+Todas las variantes de Android (`debug` y `release`) usan una sola URL HTTPS: `https://cooperativa-api-m37c.onrender.com/`. Está definida en `app/src/main/res/values/config.xml`. La app no tiene selector de servidor ni dirección local de respaldo; las compilaciones de desarrollo también se conectan a Render.
 
-Si cambia el dominio del backend, actualiza ese recurso y vuelve a compilar la app. La migración de tokens a JWT no cambia la interfaz Bearer; al publicar la API nueva, las sesiones antiguas deberán iniciar sesión de nuevo.
+### APK de entrega
+
+La URL base termina en `/`; Retrofit agrega los segmentos `api/...` de cada endpoint. Si Render cambia de dominio, actualiza `api_base_url` en `app/src/main/res/values/config.xml`, vuelve a compilar y distribuye la APK nueva. Al cambiar de servidor, la app invalida una sesión asociada con el host anterior y solicita iniciar sesión de nuevo.
+
+### Firma de publicación
+
+La versión está en `app/build.gradle.kts` (`1.5.1`, código `7`). La variante release se firma con las propiedades locales `COOPERATIVA_RELEASE_KEYSTORE`, `COOPERATIVA_RELEASE_STORE_PASSWORD`, `COOPERATIVA_RELEASE_KEY_ALIAS` y `COOPERATIVA_RELEASE_KEY_PASSWORD` en `%USERPROFILE%\.gradle\gradle.properties` (o con variables de entorno equivalentes). La clave `.p12` permanece fuera del repositorio. Conserva una copia segura del archivo y sus contraseñas; si se pierden, no podrás actualizar instalaciones firmadas con esa clave. La firma release nueva es distinta a la debug de APKs anteriores: para la primera instalación release hay que quitar la app anterior y volver a iniciar sesión.
 
 ## Recorrido de datos
 
@@ -37,7 +43,9 @@ Pantalla Compose → MainViewModel → Repository → ApiClient (Retrofit/OkHttp
 → API Express → rutas → controladores/servicios → MongoDB
 ```
 
-El JWT Bearer se guarda localmente y OkHttp lo envía en `Authorization: Bearer ...`. La API valida su firma y vencimiento, y controla permisos por rol y propietario. Si recibe 401, Android elimina la sesión y regresa al login; un 403 conserva la sesión y muestra el rechazo de permiso.
+El JWT Bearer se cifra localmente con AES-GCM y una clave no exportable de Android Keystore; OkHttp lo envía en `Authorization: Bearer ...`. Android trata el JWT como una cadena opaca; la API verifica su firma HS256, emisor, audiencia, vencimiento, rol y permisos de propietario. El payload no se cifra y solo contiene los claims mínimos de autorización. Si recibe 401, Android elimina la sesión y regresa al login; un 403 conserva la sesión y muestra el rechazo de permiso.
+
+Las operaciones que mueven dinero (depósitos, retiros, transferencias, compras, desembolsos y pagos de cuotas) envían `Idempotency-Key`. Android conserva la clave de un intento si se pierde la respuesta y la elimina cuando recibe un resultado concluyente, para que reintentar la misma acción no la registre dos veces.
 
 ## Navegación visible actual
 
@@ -47,7 +55,7 @@ El perfil de estudiante muestra Inicio, Ahorros, Préstamos, Movimientos y Perfi
 
 1. Inicia la API y verifica `/api/health` desde el equipo anfitrión.
 2. Abre el proyecto en Android Studio y espera la sincronización de Gradle.
-3. Ejecuta o instala la app; se conectará a Render desde el emulador o un teléfono físico.
-4. Inicia sesión con una cuenta de demostración configurada en el backend.
+3. Ejecuta la app desde Android Studio o instala la APK. Tanto `debug` como `release` se conectan a Render.
+4. Inicia sesión con una cuenta habilitada en la base de datos asociada al servicio desplegado.
 
-La app requiere que Render esté activo y conectado a MongoDB Atlas.
+La disponibilidad de la app depende del servicio Render y de su conexión a MongoDB Atlas. La API debe responder en `https://cooperativa-api-m37c.onrender.com/api/health`.

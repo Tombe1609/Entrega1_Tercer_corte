@@ -25,7 +25,7 @@ Si cambia el dominio, actualiza `api_base_url` y recompila. Retrofit añade `/ap
 
 La URL HTTPS de Render ya está configurada para debug y release. Retrofit añade `api/...` a esa base para construir los endpoints.
 
-La app Android está en versión `1.5.1` (código `7`). Sincroniza Gradle y genera el APK firmado de la variante `release`. Gradle toma la firma de las variables `COOPERATIVA_RELEASE_KEYSTORE`, `COOPERATIVA_RELEASE_STORE_PASSWORD`, `COOPERATIVA_RELEASE_KEY_ALIAS` y `COOPERATIVA_RELEASE_KEY_PASSWORD`; sin ellas, el APK release queda sin firmar. Conserva la clave y las contraseñas fuera del repositorio. Tras desplegar JWT, todas las personas deberán iniciar sesión de nuevo porque los tokens previos ya no serán aceptados.
+La app Android está en versión `1.5.1` (código `7`). Sincroniza Gradle y genera el APK firmado de la variante `release`. Gradle toma la firma de `%USERPROFILE%\.gradle\gradle.properties` o de variables de entorno `COOPERATIVA_RELEASE_*`; sin ellas, el APK release queda sin firmar. Conserva la clave `.p12` y sus contraseñas fuera del repositorio. La firma release es distinta de la debug de versiones anteriores, así que hay que desinstalar la app previa para hacer la primera instalación release. Tras desplegar JWT, todas las personas deberán iniciar sesión de nuevo.
 
 ## Endpoints usados por Android
 

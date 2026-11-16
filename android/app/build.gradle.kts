@@ -6,10 +6,10 @@ plugins {
 
 // La firma release toma sus secretos del entorno local/CI, nunca de archivos versionados.
 val releaseSigningValues = listOf(
-    providers.environmentVariable("COOPERATIVA_RELEASE_KEYSTORE").orNull,
-    providers.environmentVariable("COOPERATIVA_RELEASE_STORE_PASSWORD").orNull,
-    providers.environmentVariable("COOPERATIVA_RELEASE_KEY_ALIAS").orNull,
-    providers.environmentVariable("COOPERATIVA_RELEASE_KEY_PASSWORD").orNull,
+    providers.gradleProperty("COOPERATIVA_RELEASE_KEYSTORE").orElse(providers.environmentVariable("COOPERATIVA_RELEASE_KEYSTORE")).orNull,
+    providers.gradleProperty("COOPERATIVA_RELEASE_STORE_PASSWORD").orElse(providers.environmentVariable("COOPERATIVA_RELEASE_STORE_PASSWORD")).orNull,
+    providers.gradleProperty("COOPERATIVA_RELEASE_KEY_ALIAS").orElse(providers.environmentVariable("COOPERATIVA_RELEASE_KEY_ALIAS")).orNull,
+    providers.gradleProperty("COOPERATIVA_RELEASE_KEY_PASSWORD").orElse(providers.environmentVariable("COOPERATIVA_RELEASE_KEY_PASSWORD")).orNull,
 )
 val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
 val releaseSigningPartiallyConfigured = releaseSigningValues.any { !it.isNullOrBlank() } && !releaseSigningConfigured
@@ -31,6 +31,7 @@ android {
         create("release") {
             if (releaseSigningConfigured) {
                 storeFile = file(releaseSigningValues[0]!!)
+                storeType = "PKCS12"
                 storePassword = releaseSigningValues[1]
                 keyAlias = releaseSigningValues[2]
                 keyPassword = releaseSigningValues[3]

@@ -28,7 +28,7 @@ También se verificaron lecturas de estudiantes, funcionarios, ahorros, movimien
 ## Hallazgos registrados el 28 de octubre de 2026
 
 1. **URL y HTTP local:** resueltos el 16 de noviembre; debug y release usan HTTPS de Render y se retiró el selector de dirección local.
-2. **Firma de publicación:** pendiente. Debug y release compilan; release sigue sin firmar hasta que se configure la clave de publicación.
+2. **Firma de publicación:** preparada el 16 de noviembre. Se generó una clave PKCS12 local, fuera del repositorio; `assembleDebug` y `assembleRelease` pasan. `app-release.apk` verifica su firma y la versión instalada es 1.5.1 (código 7). La clave debe respaldarse de forma segura.
 3. **Escala:** las consultas administrativas siguen realizando varias peticiones por usuario/cuenta/préstamo; con más datos puede crecer el tiempo de carga.
 4. **Regla HU9:** la API calcula y registra la distribución; no acredita esos intereses en las cuentas de ahorro. Confirmar que esa conducta coincide con el enunciado antes de presentarla como acreditación de saldo.
 
@@ -45,7 +45,8 @@ La verificación confirma las 10 historias y las reglas de acceso principales en
 - `npm audit`: 0 vulnerabilidades conocidas después de fijar `nodemon` 3.1.11 en desarrollo.
 - Android recibe el token como Bearer opaco, así que el contrato JSON de login no cambia. Las compilaciones Android debug/release se verificaron por separado; no fue necesario cambiar Retrofit.
 - La app Android se sincronizó en versión 1.5.1 (`versionCode` 7) tanto en la carpeta usada por Android Studio como en `android/` del repositorio.
+- El APK release firmado fue generado en `android/app/build/outputs/apk/release/app-release.apk`; también se copió a Descargas como `Cooperativa-Universitaria-v1.5.1-Render.apk`. Su certificado SHA-256 es `904a2dffb2e74f90ce49388008b4e534a6e19cd102af120d36958f4ba4556dec`.
 
 ### Pendiente de publicación
 
-El commit `875c69d` quedó publicado en `main`. `/api/health` respondió 200 y reportó API activa y MongoDB conectado tras la publicación. Esa ruta de salud por sí sola no identifica qué commit está corriendo; confirmar la versión desplegada en el historial de Render antes de dar por migrados los inicios de sesión. Al activarse el código nuevo, los tokens del formato previo serán rechazados y las personas deberán autenticarse de nuevo. No se requieren cambios ni limpieza de MongoDB para la migración.
+El commit `688878c` quedó publicado en `main`. `/api/health` respondió 200 y reportó API activa y MongoDB conectado tras la publicación. Esa ruta de salud por sí sola no identifica qué commit está corriendo; confirmar la versión desplegada en el historial de Render antes de dar por migrados los inicios de sesión. Al activarse el código nuevo, los tokens del formato previo serán rechazados y las personas deberán autenticarse de nuevo. No se requieren cambios ni limpieza de MongoDB para la migración.
