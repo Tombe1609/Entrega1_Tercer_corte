@@ -96,7 +96,14 @@ data class Movimiento(
     val valor: Double = 0.0,
     val fecha: String? = null,
     val descripcion: String? = null,
+    @SerializedName("pago_id") val pagoId: String? = null,
 )
+
+data class CambioPasswordRequest(
+    @SerializedName("password_actual") val actual: String,
+    @SerializedName("password_nueva") val nueva: String,
+)
+data class CambioPasswordResultado(val actualizada: Boolean = false)
 
 data class MovimientosData(
     val cuenta: Ahorro? = null,

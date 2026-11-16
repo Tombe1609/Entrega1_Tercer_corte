@@ -123,6 +123,7 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
                 }
             }
         }
+        SecondaryButton("Cambiar contraseña") { nav.navigate("cambiarPassword") }
         SecondaryButton("Cerrar sesión", color = RedText) { onLogout() }
     }
 }
@@ -325,7 +326,7 @@ fun AdminMovimientosAhorroScreen(vm: MainViewModel, nav: NavController, tipo: St
                     if (i > 0) Divider()
                     ListRow(
                         title = if (dep) "Depósito" else "Retiro",
-                        subtitle = "${d.nombreDe(m.usuarioId)} · ${Fmt.fechaCorta(m.fecha)}",
+                        subtitle = "${d.nombreDe(m.usuarioId)} · ${Fmt.fechaHora(m.fecha)}",
                         extra = m.descripcion,
                         trailing = Fmt.signed(if (dep) m.valor else -m.valor),
                         trailingColor = if (dep) GreenText else RedText,
@@ -423,7 +424,7 @@ fun AdminPagosScreen(vm: MainViewModel, nav: NavController) {
                     val cap = pg.tipoAbono == "capital"
                     ListRow(
                         title = "${pg.pagoId} · ${if (cuota) "Cuota ${pg.cuotaNumero}" else if (cap) "Capital" else "Interés"}",
-                        subtitle = "${d.nombreDe(pg.usuarioId)} · ${pg.prestamoId} · ${Fmt.fechaCorta(pg.fecha)}",
+                        subtitle = "${d.nombreDe(pg.usuarioId)} · ${pg.prestamoId} · ${Fmt.fechaHora(pg.fecha)}",
                         trailing = Fmt.money(pg.valor),
                     )
                 }

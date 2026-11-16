@@ -128,6 +128,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun limpiarError() { _formError.value = null }
     fun avisar(texto: String) { _messages.tryEmit(texto) }
 
+    fun cambiarPassword(actual: String, nueva: String, confirmacion: String, alCambiar: () -> Unit) {
+        if (_busy.value) return
+        _formError.value = when {
+            actual.isEmpty() -> "Escribe tu contraseña actual."
+            nueva.trim().length < 8 || nueva.length > 128 -> "La nueva contraseña debe tener entre 8 y 128 caracteres."
+            nueva == actual -> "Elige una contraseña diferente de la actual."
+            nueva != confirmacion -> "Las contraseñas nuevas no coinciden."
+            else -> null
+        }
+        if (_formError.value != null) return
+        act("Contraseña actualizada. Inicia sesión con tu nueva contraseña.", onDone = alCambiar) {
+            repo.cambiarPassword(actual, nueva)
+        }
+    }
+
     private fun expirarSesionSiCorresponde(error: ApiException): Boolean {
         if (error.statusCode != 401 || _session.value == null) return false
         logout()
@@ -378,24 +393,61 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 }
 
 /** Historial unificado del estudiante, del más reciente al más antiguo. */
+private val descripcionCuota = Regex("Pago cuota (\\d+) pr[eé]stamo (\\S+)", RegexOption.IGNORE_CASE)
+
 fun StudentData.historial(): List<Mov> {
     val lista = mutableListOf<Mov>()
-    movimientos.forEach {
-        val dep = it.tipo == "deposito"
-        val desembolso = dep && it.descripcion.orEmpty().startsWith("Desembolso del préstamo")
+    val pagosHistorial = pagos.values.flatten()
+    val sinVincular = pagosHistorial.toMutableList()
+    movimientos.forEach { movimiento ->
+        val detalle = movimiento.descripcion.orEmpty()
+        val dep = movimiento.tipo == "deposito"
+        val desembolso = dep && detalle.startsWith("Desembolso del préstamo")
+        val cuotaAntigua = if (!dep) descripcionCuota.matchEntire(detalle.trim()) else null
+        val vinculacion = when {
+            dep -> null
+            !movimiento.pagoId.isNullOrBlank() -> sinVincular.firstOrNull { it.pagoId == movimiento.pagoId }
+            cuotaAntigua != null -> {
+                val instante = Fmt.parse(movimiento.fecha)
+                val numero = cuotaAntigua.groupValues[1].toIntOrNull()
+                val prestamo = cuotaAntigua.groupValues[2]
+                sinVincular.firstOrNull {
+                    instante != null && it.tipoAbono == "cuota" && it.cuotaNumero == numero &&
+                        it.prestamoId.equals(prestamo, ignoreCase = true) && it.valor == movimiento.valor &&
+                        Fmt.parse(it.fecha) == instante
+                }
+            }
+            else -> null
+        }
+        if (vinculacion != null) {
+            sinVincular.remove(vinculacion)
+            return@forEach
+        }
+        val esPago = !dep && (cuotaAntigua != null || !movimiento.pagoId.isNullOrBlank())
         lista += Mov(
-            if (desembolso) "Desembolso de préstamo" else if (dep) "Depósito" else "Retiro",
-            it.descripcion.orEmpty(),
-            if (dep) it.valor else -it.valor,
-            it.fecha,
-            if (desembolso) Categoria.PRESTAMOS else Categoria.AHORROS,
+            when {
+                desembolso -> "Desembolso de préstamo"
+                dep -> "Depósito"
+                esPago -> "Pago de cuota"
+                else -> "Retiro"
+            },
+            detalle,
+            if (dep) movimiento.valor else -movimiento.valor,
+            movimiento.fecha,
+            when {
+                desembolso -> Categoria.PRESTAMOS
+                esPago -> Categoria.PAGOS
+                else -> Categoria.AHORROS
+            },
             if (desembolso) "Desembolsado" else "Completado",
         )
     }
-    pagos.values.flatten().forEach {
+    pagosHistorial.forEach {
         val cuota = it.tipoAbono == "cuota"
         val cap = it.tipoAbono == "capital"
-        lista += Mov(if (cuota) "Pago de cuota" else if (cap) "Abono de capital" else "Pago de intereses", "Préstamo ${it.prestamoId}", -it.valor, it.fecha, Categoria.PAGOS, "Completado")
+        val detalle = if (cuota && it.cuotaNumero != null) "Cuota ${it.cuotaNumero} · Préstamo ${it.prestamoId}"
+        else "Préstamo ${it.prestamoId}"
+        lista += Mov(if (cuota) "Pago de cuota" else if (cap) "Abono de capital" else "Pago de intereses", detalle, -it.valor, it.fecha, Categoria.PAGOS, "Completado")
     }
     return lista.sortedByDescending { Fmt.parse(it.fecha) }
 }

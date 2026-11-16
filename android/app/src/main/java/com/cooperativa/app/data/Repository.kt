@@ -42,6 +42,10 @@ class Repository(private val client: ApiClient) {
     }
 
     suspend fun login(email: String, password: String) = call { api.login(LoginRequest(email.trim(), password)) }
+    suspend fun cambiarPassword(actual: String, nueva: String) {
+        val resultado = call { api.cambiarPassword(CambioPasswordRequest(actual, nueva)) }
+        if (!resultado.actualizada) throw ApiException("No se confirmó el cambio de contraseña.")
+    }
     suspend fun crearCuentaAcceso(body: CrearCuentaAccesoRequest) = call { api.crearCuentaAcceso(body) }
 
     suspend fun estudiantes() = call { api.estudiantes() }.estudiantes

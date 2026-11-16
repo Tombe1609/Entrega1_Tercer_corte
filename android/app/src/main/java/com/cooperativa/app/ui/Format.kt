@@ -20,6 +20,7 @@ object Fmt {
     private val es = Locale("es", "CO")
     private val corta = DateTimeFormatter.ofPattern("d MMM", es).withZone(zonaCooperativa)
     private val larga = DateTimeFormatter.ofPattern("d MMM yyyy", es).withZone(zonaCooperativa)
+    private val hora = DateTimeFormatter.ofPattern("h:mm a", es).withZone(zonaCooperativa)
 
     /** $1.850.000 */
     fun money(v: Double): String = "$" + (if (v % 1.0 == 0.0) entero.format(v) else decimales.format(v))
@@ -38,11 +39,23 @@ object Fmt {
     fun fechaCorta(iso: String?): String = parse(iso)?.let { limpiar(corta.format(it)) } ?: "—"
     fun fechaLarga(iso: String?): String = parse(iso)?.let { limpiar(larga.format(it)) } ?: "—"
 
+    fun fechaHora(iso: String?): String = parse(iso)?.let {
+        "${limpiar(larga.format(it))} · ${hora.format(it)}"
+    } ?: "—"
+
+    private fun diaCuota(fecha: String?): LocalDate? {
+        val instante = parse(fecha)
+        if (instante != null) return instante.atZone(zonaCooperativa).toLocalDate()
+        return fecha?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    }
+
+    fun fechaCuota(fecha: String?): String = diaCuota(fecha)?.let { limpiar(larga.format(it)) } ?: "—"
+
     /** Las cuotas se pueden pagar desde el día de vencimiento en adelante, según la zona de Colombia. */
     fun cuotaVencida(fecha: String?): Boolean {
         return try {
-            val instante = parse(fecha) ?: return false
-            !instante.atZone(zonaCooperativa).toLocalDate().isAfter(LocalDate.now(zonaCooperativa))
+            val dia = diaCuota(fecha) ?: return false
+            !dia.isAfter(LocalDate.now(zonaCooperativa))
         } catch (_: Exception) {
             false
         }
@@ -50,8 +63,8 @@ object Fmt {
 
     fun cuotaAtrasada(fecha: String?): Boolean {
         return try {
-            val instante = parse(fecha) ?: return false
-            instante.atZone(zonaCooperativa).toLocalDate().isBefore(LocalDate.now(zonaCooperativa))
+            val dia = diaCuota(fecha) ?: return false
+            dia.isBefore(LocalDate.now(zonaCooperativa))
         } catch (_: Exception) {
             false
         }

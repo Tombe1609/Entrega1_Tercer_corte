@@ -105,7 +105,7 @@ fun HomeScreen(vm: MainViewModel, nav: NavController) {
                 val activo = d.prestamoActivo()!!
                 val siguienteCuota = activo.cuotas.firstOrNull { it.estado == "pendiente" }
                 if (siguienteCuota != null) {
-                    WarningBoxRow("Próxima cuota", Fmt.fechaLarga(siguienteCuota.fechaVencimiento), Fmt.money(siguienteCuota.valor)) {
+                    WarningBoxRow("Próxima cuota", Fmt.fechaCuota(siguienteCuota.fechaVencimiento), Fmt.money(siguienteCuota.valor)) {
                         nav.navigate("prestamo/${activo.prestamoId}")
                     }
                 } else {
@@ -184,7 +184,7 @@ fun AhorrosScreen(vm: MainViewModel, nav: NavController) {
                     if (i > 0) Divider()
                     ListRow(
                         title = if (dep) "Depósito" else "Retiro",
-                        subtitle = "${Fmt.fechaCorta(m.fecha)} · ${m.descripcion.orEmpty()}",
+                        subtitle = "${Fmt.fechaHora(m.fecha)} · ${m.descripcion.orEmpty()}",
                         extra = "Saldo: ${Fmt.money(saldo)}",
                         trailing = Fmt.signed(signed),
                         trailingColor = if (dep) GreenText else RedText,
@@ -344,7 +344,7 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
                         val atrasada = Fmt.cuotaAtrasada(cuota.fechaVencimiento)
                         AppCard {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Cuota ${cuota.numero} · ${Fmt.fechaLarga(cuota.fechaVencimiento)}", color = Ink, fontWeight = FontWeight.Bold)
+                                Text("Cuota ${cuota.numero} · ${Fmt.fechaCuota(cuota.fechaVencimiento)}", color = Ink, fontWeight = FontWeight.Bold)
                                 StatusChip(
                                     when { cuota.estado == "pagada" -> "Pagada"; atrasada -> "Vencida"; vencida -> "Vence hoy"; else -> "Aún no vence" },
                                     when { cuota.estado == "pagada" -> ChipKind.GREEN; vencida -> ChipKind.ORANGE; else -> ChipKind.GREY },
@@ -357,7 +357,7 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
                                 if (vencida) {
                                     PrimaryButton("Pagar cuota desde ahorros") { vm.pagarCuota(id, cuota.numero) { vm.cargarEstudiante() } }
                                 } else {
-                                    Text("Podrás pagarla desde el ${Fmt.fechaLarga(cuota.fechaVencimiento)}. El interés total del préstamo ya está incluido en las cuotas.", color = Muted, fontSize = 13.sp)
+                                    Text("Podrás pagarla desde el ${Fmt.fechaCuota(cuota.fechaVencimiento)}. El interés total del préstamo ya está incluido en las cuotas.", color = Muted, fontSize = 13.sp)
                                 }
                             }
                         }
@@ -372,7 +372,7 @@ fun PrestamoDetalleScreen(vm: MainViewModel, nav: NavController, id: String) {
                     if (i > 0) Divider()
                     ListRow(
                         title = "${pg.pagoId} · ${if (pg.tipoAbono == "capital") "Capital" else "Interés"}",
-                        subtitle = Fmt.fechaCorta(pg.fecha),
+                        subtitle = Fmt.fechaHora(pg.fecha),
                         trailing = Fmt.money(pg.valor),
                     )
                 }
@@ -400,7 +400,7 @@ fun HistorialPagosScreen(vm: MainViewModel, nav: NavController, id: String) {
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(Fmt.money(pg.valor), color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
-                        Text(Fmt.fechaLarga(pg.fecha), color = Muted, fontSize = 14.sp)
+                        Text(Fmt.fechaHora(pg.fecha), color = Muted, fontSize = 14.sp)
                     }
                     Text(if (cuota) "Pago de cuota desde ahorros" else if (cap) "Abono a capital" else "Pago de intereses", color = Muted, fontSize = 13.sp)
                 }
@@ -605,7 +605,7 @@ fun MovimientosScreen(vm: MainViewModel, nav: NavController) {
     LaunchedEffect(Unit) { vm.cargarEstudiante() }
     var filtro by remember { mutableStateOf<Categoria?>(null) }
 
-    ScreenScaffold("Movimientos", "Todo lo que pasa en tu cooperativa") {
+    ScreenScaffold("Movimientos", "Fechas y horas de Colombia") {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf<Pair<String, Categoria?>>("Todos" to null, "Ahorros" to Categoria.AHORROS, "Préstamos" to Categoria.PRESTAMOS, "Pagos" to Categoria.PAGOS)
                 .forEach { (texto, cat) ->
@@ -626,7 +626,7 @@ fun MovimientosScreen(vm: MainViewModel, nav: NavController) {
                     if (i > 0) Divider()
                     ListRow(
                         title = m.titulo,
-                        subtitle = "${Fmt.fechaCorta(m.fecha)} · ${m.detalle}",
+                        subtitle = "${Fmt.fechaHora(m.fecha)} · ${m.detalle}",
                         trailing = Fmt.signed(m.valor),
                         trailingColor = if (m.valor >= 0) GreenText else RedText,
                         badge = { StatusChip(m.estado) },
@@ -641,7 +641,7 @@ fun MovimientosScreen(vm: MainViewModel, nav: NavController) {
 // PERFIL
 // =====================================================================
 @Composable
-fun PerfilScreen(vm: MainViewModel, onLogout: () -> Unit) {
+fun PerfilScreen(vm: MainViewModel, onCambiarPassword: () -> Unit, onLogout: () -> Unit) {
     val s by vm.session.collectAsState()
     ScreenScaffold("Mi perfil", "Socio ${if (s?.esAdmin == true) "administrador" else "estudiante"}") {
         AppCard {
@@ -661,7 +661,7 @@ fun PerfilScreen(vm: MainViewModel, onLogout: () -> Unit) {
             }
         }
         PrimaryButton("Editar información") { vm.avisar("Editar información aún no está disponible en la API.") }
-        SecondaryButton("Cambiar contraseña") { vm.avisar("Cambiar contraseña aún no está disponible en la API.") }
+        SecondaryButton("Cambiar contraseña", onClick = onCambiarPassword)
         Text(
             "Cerrar sesión", color = RedText, fontWeight = FontWeight.Bold, fontSize = 17.sp,
             modifier = Modifier.fillMaxWidth().clickable { onLogout() }.padding(16.dp),

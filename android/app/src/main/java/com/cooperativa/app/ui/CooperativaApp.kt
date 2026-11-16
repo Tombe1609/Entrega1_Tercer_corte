@@ -28,6 +28,7 @@ import com.cooperativa.app.ui.screens.AdminPanelScreen
 import com.cooperativa.app.ui.screens.AdminPrestamosScreen
 import com.cooperativa.app.ui.screens.AdminUsuariosScreen
 import com.cooperativa.app.ui.screens.AhorrosScreen
+import com.cooperativa.app.ui.screens.CambiarPasswordScreen
 import com.cooperativa.app.ui.screens.DepositarScreen
 import com.cooperativa.app.ui.screens.DistribuirInteresesScreen
 import com.cooperativa.app.ui.screens.HistorialPagosScreen
@@ -113,7 +114,10 @@ private fun CooperativaAppContent(vm: MainViewModel) {
             composable("ahorros") { AhorrosScreen(vm, nav) }
             composable("prestamos") { PrestamosScreen(vm, nav) }
             composable("movimientos") { MovimientosScreen(vm, nav) }
-            composable("perfil") { PerfilScreen(vm) { cerrarSesion() } }
+            composable("perfil") { PerfilScreen(vm, { nav.navigate("cambiarPassword") }) { cerrarSesion() } }
+            composable("cambiarPassword") {
+                CambiarPasswordScreen(vm, { nav.popBackStack() }, { cerrarSesion() })
+            }
             composable("depositar") { DepositarScreen(vm, nav) }
             composable("retirar") { RetirarScreen(vm, nav) }
             composable("solicitar") { SolicitarPrestamoScreen(vm, nav) }

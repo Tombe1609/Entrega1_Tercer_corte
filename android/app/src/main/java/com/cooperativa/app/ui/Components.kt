@@ -27,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -65,6 +66,8 @@ import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import com.cooperativa.app.ui.theme.Bg
 import com.cooperativa.app.ui.theme.CreamBg
 import com.cooperativa.app.ui.theme.CreamText
@@ -242,6 +245,15 @@ fun AppTextField(
     placeholder: String? = null,
     singleLine: Boolean = true,
 ) {
+    var visible by remember { mutableStateOf(false) }
+    val alternarVisibilidad: (@Composable () -> Unit)? = if (password) ({
+        IconButton(onClick = { visible = !visible }) {
+            Icon(
+                imageVector = if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                contentDescription = if (visible) "Ocultar contraseña" else "Mostrar contraseña",
+            )
+        }
+    }) else null
     val prefixContent: (@Composable () -> Unit)? =
         if (prefix != null) ({ Text(prefix, fontWeight = FontWeight.Bold) }) else null
     val placeholderContent: (@Composable () -> Unit)? =
@@ -257,7 +269,8 @@ fun AppTextField(
             singleLine = singleLine,
             colors = fieldColors(),
             keyboardOptions = KeyboardOptions(keyboardType = if (password) KeyboardType.Password else keyboard),
-            visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
+            visualTransformation = if (password && !visible) PasswordVisualTransformation() else VisualTransformation.None,
+            trailingIcon = alternarVisibilidad,
             prefix = prefixContent,
             placeholder = placeholderContent,
         )

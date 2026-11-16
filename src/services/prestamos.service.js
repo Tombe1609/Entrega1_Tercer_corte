@@ -5,7 +5,9 @@ const { confirmarEscritura } = require('../utils/validadores');
 const { siguientesIds, conReintentoDeId } = require('../utils/ids');
 const { ejecutarAtomico } = require('../utils/transaccion');
 const { redondear } = require('../utils/dinero');
-const { hoyColombia, productoDentroDeVigencia } = require('../utils/fechas');
+const {
+  hoyColombia, fechaISOValida, fechaVencimientoColombia, sumarMesesCalendarioColombia, productoDentroDeVigencia,
+} = require('../utils/fechas');
 
 const SIN_ID = { projection: { _id: 0 } };
 
@@ -22,10 +24,7 @@ function crearPlanCuotas(capital, interes, plazo, fechaPrimerPago) {
     capitalAsignado = redondear(capitalAsignado + capitalCuota);
     interesAsignado = redondear(interesAsignado + interesCuota);
 
-    const year = fechaPrimerPago.getFullYear();
-    const month = fechaPrimerPago.getMonth() + indice;
-    const ultimoDia = new Date(year, month + 1, 0).getDate();
-    const fechaVencimiento = new Date(year, month, Math.min(fechaPrimerPago.getDate(), ultimoDia), 12, 0, 0);
+    const fechaVencimiento = fechaVencimientoColombia(sumarMesesCalendarioColombia(fechaPrimerPago, indice));
     return {
       numero: indice + 1,
       fecha_vencimiento: fechaVencimiento,
@@ -35,21 +34,6 @@ function crearPlanCuotas(capital, interes, plazo, fechaPrimerPago) {
       estado: 'pendiente',
     };
   });
-}
-
-function sumarMesesCalendario(fecha, meses) {
-  const base = new Date(fecha);
-  const month = base.getMonth() + meses;
-  const year = base.getFullYear() + Math.floor(month / 12);
-  const monthFinal = ((month % 12) + 12) % 12;
-  const ultimoDia = new Date(year, monthFinal + 1, 0).getDate();
-  return new Date(year, monthFinal, Math.min(base.getDate(), ultimoDia), 12, 0, 0);
-}
-
-function fechaColombia(fecha) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(fecha);
 }
 
 async function listarFines() {
@@ -89,8 +73,10 @@ async function solicitar({ usuario_id, fin_id, monto, plazo_meses = 1, fecha_pri
   }
   if (monto < 1000) throw new AppError(400, 'El monto mínimo del préstamo es 1000.');
   if (!Number.isInteger(plazo_meses) || plazo_meses < 1 || plazo_meses > 3) throw new AppError(400, 'El plazo debe ser de 1 a 3 meses.');
-  const primerPago = new Date(`${fecha_primer_pago}T12:00:00`);
-  if (!fecha_primer_pago || Number.isNaN(primerPago.getTime()) || primerPago.toISOString().slice(0, 10) !== fecha_primer_pago || primerPago <= new Date()) throw new AppError(400, 'La fecha de la primera cuota debe ser una fecha futura válida.');
+  if (!fechaISOValida(fecha_primer_pago) || fecha_primer_pago <= hoyColombia()) {
+    throw new AppError(400, 'La fecha de la primera cuota debe ser una fecha futura válida.');
+  }
+  const primerPago = fechaVencimientoColombia(fecha_primer_pago);
 
   const prestamos = coleccion('prestamos');
   const existente = await prestamos.findOne({ usuario_id, estado: { $in: ['pendiente', 'activo'] } }, SIN_ID);
@@ -115,7 +101,7 @@ async function solicitar({ usuario_id, fin_id, monto, plazo_meses = 1, fecha_pri
       estado: 'pendiente',
       plazo_meses,
       fecha_primer_pago: primerPago,
-      cuotas: crearPlanCuotas(monto, interes, plazo_meses, primerPago),
+      cuotas: crearPlanCuotas(monto, interes, plazo_meses, fecha_primer_pago),
       fecha_solicitud: new Date(),
     };
     confirmarEscritura(await prestamos.insertOne({ ...prestamo }), 'No se pudo registrar el préstamo.');
@@ -165,13 +151,15 @@ async function aprobar(prestamo_id, funcionario_id) {
       if (!fechaPrimeraCuota || Number.isNaN(fechaPrimeraCuota.getTime())) {
         throw new AppError(409, 'La solicitud no tiene una primera fecha válida para el plan de cuotas.');
       }
-      if (fechaColombia(fechaPrimeraCuota) <= hoyColombia()) {
-        fechaPrimerPago = sumarMesesCalendario(fecha_desembolso, 1);
+      const diaDesembolso = hoyColombia(fecha_desembolso);
+      if (hoyColombia(fechaPrimeraCuota) <= diaDesembolso) {
+        const primerDiaPago = sumarMesesCalendarioColombia(diaDesembolso, 1);
+        fechaPrimerPago = fechaVencimientoColombia(primerDiaPago);
         cuotasProgramadas = crearPlanCuotas(
           solicitud.capital_pendiente,
           solicitud.interes_pendiente,
           plazoMeses,
-          fechaPrimerPago,
+          primerDiaPago,
         );
       }
       const cambioPrestamo = await prestamos.updateOne(
@@ -307,33 +295,40 @@ async function pagarCuota(prestamo_id, numero, usuario_id) {
     if(p.estado!=='activo') throw new AppError(400,'El préstamo no está activo.');
     const cuota=p.cuotas?.find(x=>x.numero===numero);
     if(!cuota || cuota.estado!=='pendiente') throw new AppError(409,'La cuota no existe o ya fue pagada.');
+    const fecha = new Date();
     const fechaVencimiento = cuota.fecha_vencimiento instanceof Date
       ? cuota.fecha_vencimiento
       : new Date(cuota.fecha_vencimiento);
-    if (Number.isNaN(fechaVencimiento.getTime())) {
+    if (!cuota.fecha_vencimiento || Number.isNaN(fechaVencimiento.getTime())) {
       throw new AppError(409, `La cuota ${numero} no tiene una fecha de vencimiento válida. Contacta a un funcionario.`);
     }
-    const fechaVencimientoColombia = fechaColombia(fechaVencimiento);
-    if (fechaVencimientoColombia > hoyColombia()) {
-      throw new AppError(409, `La cuota ${numero} estará disponible para pago el ${fechaVencimientoColombia}.`);
+    const diaVencimiento = typeof cuota.fecha_vencimiento === 'string' && fechaISOValida(cuota.fecha_vencimiento)
+      ? cuota.fecha_vencimiento
+      : hoyColombia(fechaVencimiento);
+    if (diaVencimiento > hoyColombia(fecha)) {
+      throw new AppError(409, `La cuota ${numero} estará disponible para pago el ${diaVencimiento}.`);
     }
     const cuenta=await ahorros.findOne({usuario_id,estado:'activo'},{session,...SIN_ID});
     if(!cuenta) throw new AppError(404,'No tienes una cuenta activa.');
     const debito=await ahorros.updateOne({ahorro_id:cuenta.ahorro_id,estado:'activo',saldo:{$gte:cuota.valor}},{$inc:{saldo:-cuota.valor}},{session});
     confirmarEscritura(debito); if(debito.matchedCount!==1) throw new AppError(400,'Saldo insuficiente para pagar esta cuota.');
     alDeshacer(()=>ahorros.updateOne({ahorro_id:cuenta.ahorro_id},{$inc:{saldo:cuota.valor}}));
-    const cuotas=p.cuotas.map(x=>x.numero===numero?{...x,estado:'pagada',fecha_pago:new Date()}:x);
+    const cuotas=p.cuotas.map(x=>x.numero===numero?{...x,estado:'pagada',fecha_pago:fecha}:x);
     const capitalCuota=redondear(cuota.capital ?? Math.min(p.capital_pendiente, cuota.valor * p.capital_pendiente / (p.capital_pendiente + p.interes_pendiente)));
     const interesCuota=redondear(cuota.interes ?? Math.max(0, cuota.valor - capitalCuota));
     const capitalPendiente=redondear(Math.max(0,p.capital_pendiente-capitalCuota));
     const interesPendiente=redondear(Math.max(0,p.interes_pendiente-interesCuota));
     const estado=cuotas.every(x=>x.estado==='pagada')?'pagado':'activo';
-    const upd=await prestamos.updateOne({prestamo_id,estado:'activo','cuotas.numero':numero,'cuotas.estado':'pendiente'},{$set:{cuotas,capital_pendiente:capitalPendiente,interes_pendiente:interesPendiente,estado}},{session});
+    const upd=await prestamos.updateOne(
+      {prestamo_id,estado:'activo',cuotas:{$elemMatch:{numero,estado:'pendiente'}}},
+      {$set:{cuotas,capital_pendiente:capitalPendiente,interes_pendiente:interesPendiente,estado}},
+      {session},
+    );
     confirmarEscritura(upd); if(upd.matchedCount!==1) throw new AppError(409,'La cuota cambió. Actualiza e intenta otra vez.');
     alDeshacer(()=>prestamos.updateOne({prestamo_id},{$set:{cuotas:p.cuotas,capital_pendiente:p.capital_pendiente,interes_pendiente:p.interes_pendiente,estado:p.estado}}));
-    const [pago_id]=await siguientesIds(pagos,'pago_id','PG',1,session); const [movimiento_id]=await siguientesIds(movimientos,'movimiento_id','M',1,session); const fecha=new Date();
+    const [pago_id]=await siguientesIds(pagos,'pago_id','PG',1,session); const [movimiento_id]=await siguientesIds(movimientos,'movimiento_id','M',1,session);
     const pago={pago_id,prestamo_id,usuario_id,tipo_abono:'cuota',cuota_numero:numero,valor:cuota.valor,fecha};
-    const movimiento={movimiento_id,ahorro_id:cuenta.ahorro_id,usuario_id,tipo:'retiro',valor:cuota.valor,fecha,descripcion:`Pago cuota ${numero} préstamo ${prestamo_id}`};
+    const movimiento={movimiento_id,ahorro_id:cuenta.ahorro_id,usuario_id,tipo:'retiro',valor:cuota.valor,fecha,pago_id,descripcion:`Pago cuota ${numero} préstamo ${prestamo_id}`};
     confirmarEscritura(await pagos.insertOne(pago,{session})); confirmarEscritura(await movimientos.insertOne(movimiento,{session}));
     return {pago,prestamo:await obtenerPrestamo(prestamo_id,session),saldo_anterior:cuenta.saldo,saldo_actual:cuenta.saldo-cuota.valor};
   }));

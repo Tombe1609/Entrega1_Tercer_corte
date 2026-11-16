@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit
 /** Todos los endpoints de la API REST (Node.js + MongoDB). */
 interface CooperativaApi {
     @POST("api/auth/login") suspend fun login(@Body body: LoginRequest): ApiResponse<Session>
+    @PATCH("api/auth/password")
+    suspend fun cambiarPassword(@Body body: CambioPasswordRequest): ApiResponse<CambioPasswordResultado>
     @POST("api/gestion-usuarios") suspend fun crearCuentaAcceso(@Body body: CrearCuentaAccesoRequest): ApiResponse<CuentaAccesoCreada>
 
     @GET("api/estudiantes") suspend fun estudiantes(): ApiResponse<EstudiantesData>

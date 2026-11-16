@@ -18,6 +18,22 @@ function fechaISOValida(valor) {
   return !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === valor;
 }
 
+/** Representación BSON de un día de vencimiento, anclada al mediodía de Colombia. */
+function fechaVencimientoColombia(dia) {
+  return new Date(`${dia}T12:00:00-05:00`);
+}
+
+function sumarMesesCalendarioColombia(dia, meses) {
+  const base = new Date(`${dia}T00:00:00Z`);
+  const diaOriginal = base.getUTCDate();
+  base.setUTCDate(1);
+  base.setUTCMonth(base.getUTCMonth() + meses);
+  const ultimoDia = new Date(base);
+  ultimoDia.setUTCMonth(ultimoDia.getUTCMonth() + 1, 0);
+  base.setUTCDate(Math.min(diaOriginal, ultimoDia.getUTCDate()));
+  return base.toISOString().slice(0, 10);
+}
+
 function productoDentroDeVigencia(producto, hoy = hoyColombia()) {
   return (!producto.fecha_inicio || producto.fecha_inicio <= hoy)
     && (!producto.fecha_fin || producto.fecha_fin >= hoy);
@@ -32,4 +48,7 @@ function filtroVigenciaProducto(hoy = hoyColombia()) {
   };
 }
 
-module.exports = { hoyColombia, fechaISOValida, productoDentroDeVigencia, filtroVigenciaProducto };
+module.exports = {
+  hoyColombia, fechaISOValida, fechaVencimientoColombia, sumarMesesCalendarioColombia,
+  productoDentroDeVigencia, filtroVigenciaProducto,
+};

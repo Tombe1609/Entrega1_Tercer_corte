@@ -101,6 +101,7 @@ Las **10 funcionalidades** que se demuestran son HU1-HU10 (detalle y guía en [`
 | HU | Método | Endpoint | Descripción | Códigos |
 |---|---|---|---|---|
 | - | POST | `/api/auth/login` | Iniciar sesión y obtener token Bearer | 200, 400, 401 |
+| - | PATCH | `/api/auth/password` | Cambiar la contraseña de la cuenta autenticada con `password_actual` y `password_nueva`; invalida sus sesiones anteriores | 200, 400, 401, 403, 409, 429 |
 | 1 | POST | `/api/estudiantes` | Registrar estudiante (id U### automático) | 201, 400, 409 |
 | 1 | GET | `/api/estudiantes?estado=` | Listar estudiantes | 200, 400 |
 | 1 | GET | `/api/estudiantes/:usuario_id` | Consultar un estudiante | 200, 400, 404 |
