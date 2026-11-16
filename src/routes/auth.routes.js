@@ -7,6 +7,8 @@ const AppError = require('../utils/AppError');
 const { firmarToken } = require('../utils/authToken');
 const { hashPassword, verificarPassword } = require('../utils/password');
 const requireAuth = require('../middlewares/requireAuth');
+const { ejecutarAtomico } = require('../utils/transaccion');
+const { auditar } = require('../services/cuentas.service');
 
 const limitarLogin = rateLimit({
   windowMs: 5 * 60 * 1000,
@@ -56,7 +58,7 @@ router.post('/login', limitarLogin, asyncHandler(async (req, res) => {
     rol, id, nombre: persona.nombre, email: persona.email,
     documento: persona.documento || null, telefono: persona.telefono || null,
     cargo: persona.cargo || null, estado: persona.estado || null,
-    ahorro_id, token,
+    ahorro_id, token, area: rol === 'funcionario' ? persona.area || null : null,
   }, 'Inicio de sesión correcto.');
 }));
 
@@ -85,11 +87,18 @@ router.patch('/password', requireAuth, limitarCambioPassword, asyncHandler(async
   }
 
   const password_hash = await hashPassword(nueva);
-  const cambio = await cuentas.updateOne(
-    { ...identidad, _id: cuenta._id, estado: cuenta.estado, password_hash: cuenta.password_hash },
-    { $set: { password_hash }, $inc: { version_sesion: 1 } },
-  );
-  if (cambio.matchedCount !== 1) throw new AppError(409, 'La cuenta cambió. Inicia sesión e inténtalo nuevamente.');
+  await ejecutarAtomico(async ({ session, alDeshacer }) => {
+    const cambio = await cuentas.updateOne(
+      { ...identidad, _id: cuenta._id, estado: cuenta.estado, password_hash: cuenta.password_hash },
+      { $set: { password_hash }, $inc: { version_sesion: 1 } },
+      { session },
+    );
+    if (cambio.matchedCount !== 1) throw new AppError(409, 'La cuenta cambió. Inicia sesión e inténtalo nuevamente.');
+    alDeshacer(() => cuentas.updateOne({ _id: cuenta._id, password_hash }, {
+      $set: { password_hash: cuenta.password_hash, version_sesion: cuenta.version_sesion ?? 0 },
+    }));
+    await auditar({ actor: req.auth, usuario: req.auth.id, accion: 'password_actualizada', campos: ['password'], session });
+  });
   return ok(res, { actualizada: true }, 'Contraseña actualizada. Inicia sesión con tu nueva contraseña.');
 }));
 

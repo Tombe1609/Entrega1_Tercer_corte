@@ -1,13 +1,15 @@
 const app = require('./app');
 const config = require('./config/config');
 const { conectar, soportaTransacciones, cerrar } = require('./config/database');
+const { indicesCuentas } = require('./services/cuentas.service');
 
 async function iniciar() {
   try {
-    await conectar();
+    const db = await conectar();
     if (config.entorno === 'production' && !soportaTransacciones()) {
       throw new Error('Producción requiere MongoDB con transacciones (replica set o clúster compatible).');
     }
+    await indicesCuentas(db);
   } catch (error) {
     console.error('No se pudo conectar con MongoDB:', error.message);
     console.error('Verifique que MongoDB esté en ejecución y que MONGODB_URI en .env sea correcta.');

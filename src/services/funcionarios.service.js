@@ -3,7 +3,9 @@ const AppError = require('../utils/AppError');
 const { confirmarEscritura } = require('../utils/validadores');
 const { siguientesIds, conReintentoDeId } = require('../utils/ids');
 
-const SIN_ID = { projection: { _id: 0 } };
+const SIN_ID = { projection: {
+  _id: 0, funcionario_id: 1, nombre: 1, cargo: 1, telefono: 1, email: 1, estado: 1, area: 1,
+} };
 
 // Cargos permitidos según la HU2 del proyecto original.
 const CARGOS_PERMITIDOS = [

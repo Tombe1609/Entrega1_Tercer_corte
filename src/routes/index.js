@@ -16,6 +16,7 @@ router.get('/health', asyncHandler(async (req, res) => {
 
 // Login y health son públicos; todas las rutas de negocio exigen Bearer válido.
 router.use('/auth', require('./auth.routes'));
+router.use(require('./cuentas.routes'));
 router.use(require('../middlewares/requireAuth'));
 router.use('/gestion-usuarios', require('./gestion-usuarios.routes'));
 router.use('/estudiantes', require('./estudiantes.routes'));

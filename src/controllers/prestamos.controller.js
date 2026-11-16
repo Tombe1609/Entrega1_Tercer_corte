@@ -61,4 +61,14 @@ async function historialPagos(req, res) {
   return ok(res, await servicio.historialPagos(id), 'Historial de pagos consultado correctamente.');
 }
 
-module.exports = { listarFines, solicitar, aprobar, obtener, calcularInteres, pagarCuota, historialPagos };
+async function listar(req, res) {
+  return ok(res, { prestamos: await servicio.listarAdministracion() });
+}
+
+async function rechazar(req, res) {
+  const id = v.idParametro(req.params.prestamo_id, 'prestamo', 'prestamo_id');
+  const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
+  return ok(res, await servicio.rechazar(id, req.auth.id, motivo), 'Solicitud de crédito rechazada.');
+}
+
+module.exports = { listarFines, solicitar, aprobar, obtener, calcularInteres, pagarCuota, historialPagos, listar, rechazar };

@@ -2,12 +2,12 @@ const { coleccion } = require('../config/database');
 const AppError = require('../utils/AppError');
 const asyncHandler = require('../utils/asyncHandler');
 
-const ROLES_ADMINISTRATIVOS = ['funcionario', 'rector'];
+const { tieneArea } = require('./requireArea');
 
 /** Permite al estudiante acceder a su propio recurso y al personal a cualquier recurso. */
-function requireOwnerOrStaff({ collection, idParam, idField, ownerField = 'usuario_id' }) {
+function requireOwnerOrStaff({ collection, idParam, idField, ownerField = 'usuario_id', staffAreas = [] }) {
   return asyncHandler(async (req, res, next) => {
-    if (ROLES_ADMINISTRATIVOS.includes(req.auth?.rol)) return next();
+    if (tieneArea(req.auth, ...staffAreas)) return next();
     if (req.auth?.rol !== 'estudiante') {
       throw new AppError(403, 'Tu rol no tiene permiso para acceder a este recurso.');
     }
@@ -25,9 +25,9 @@ function requireOwnerOrStaff({ collection, idParam, idField, ownerField = 'usuar
 }
 
 /** Restringe rutas con :usuario_id al propio estudiante o a personal administrativo. */
-function requireSelfOrStaff(param = 'usuario_id') {
+function requireSelfOrStaff(param = 'usuario_id', ...staffAreas) {
   return (req, res, next) => {
-    if (ROLES_ADMINISTRATIVOS.includes(req.auth?.rol)) return next();
+    if (tieneArea(req.auth, ...staffAreas)) return next();
     if (req.auth?.rol !== 'estudiante') {
       return next(new AppError(403, 'Tu rol no tiene permiso para acceder a este recurso.'));
     }
@@ -41,7 +41,7 @@ function requireSelfOrStaff(param = 'usuario_id') {
 /** Un estudiante solo puede crear recursos asociados a su propio usuario_id. */
 function requireSelfBodyOrStaff(field = 'usuario_id') {
   return (req, res, next) => {
-    if (ROLES_ADMINISTRATIVOS.includes(req.auth?.rol)) return next();
+    if (tieneArea(req.auth)) return next();
     if (req.auth?.rol !== 'estudiante') {
       return next(new AppError(403, 'Tu rol no tiene permiso para realizar esta operación.'));
     }

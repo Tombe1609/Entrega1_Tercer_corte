@@ -3,13 +3,15 @@ const AppError = require('../utils/AppError');
 const { confirmarEscritura } = require('../utils/validadores');
 const { siguientesIds, conReintentoDeId } = require('../utils/ids');
 
-const SIN_ID = { projection: { _id: 0 } };
+const DATOS_PUBLICOS = { projection: {
+  _id: 0, usuario_id: 1, tipo: 1, nombre: 1, documento: 1, telefono: 1, email: 1, estado: 1,
+} };
 
 /** HU1: registra un estudiante (el identificador U### se genera automáticamente). */
 async function registrar({ nombre, documento, telefono, email }) {
   const usuarios = coleccion('usuarios');
 
-  const duplicado = await usuarios.findOne({ $or: [{ documento }, { email }] }, SIN_ID);
+  const duplicado = await usuarios.findOne({ $or: [{ documento }, { email }] }, DATOS_PUBLICOS);
   if (duplicado) {
     const campo = duplicado.documento === documento ? 'documento' : 'email';
     throw new AppError(409, `No se registró: ya existe un usuario con ese ${campo}.`);
@@ -26,11 +28,11 @@ async function registrar({ nombre, documento, telefono, email }) {
 async function listar({ estado } = {}) {
   const filtro = { tipo: 'estudiante' };
   if (estado) filtro.estado = estado;
-  return coleccion('usuarios').find(filtro, SIN_ID).sort({ usuario_id: 1 }).toArray();
+  return coleccion('usuarios').find(filtro, DATOS_PUBLICOS).sort({ usuario_id: 1 }).toArray();
 }
 
 async function obtener(usuario_id) {
-  const estudiante = await coleccion('usuarios').findOne({ usuario_id, tipo: 'estudiante' }, SIN_ID);
+  const estudiante = await coleccion('usuarios').findOne({ usuario_id, tipo: 'estudiante' }, DATOS_PUBLICOS);
   if (!estudiante) throw new AppError(404, `No existe un estudiante con id ${usuario_id}.`);
   return estudiante;
 }

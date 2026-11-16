@@ -17,6 +17,11 @@ import java.util.concurrent.TimeUnit
 
 /** Todos los endpoints de la API REST (Node.js + MongoDB). */
 interface CooperativaApi {
+    @POST("api/solicitudes-cuenta") suspend fun solicitarCuenta(@Body body: SolicitudCuentaRequest): ApiResponse<Map<String, String>>
+    @GET("api/solicitudes-cuenta") suspend fun solicitudesCuenta(): ApiResponse<SolicitudesCuentaData>
+    @PATCH("api/solicitudes-cuenta/{id}") suspend fun decidirSolicitudCuenta(@Path("id") id: String, @Body body: DecisionSolicitudRequest): ApiResponse<Map<String, String>>
+    @PATCH("api/mi-perfil") suspend fun editarPerfil(@Body body: PerfilRequest): ApiResponse<PerfilResultado>
+    @GET("api/auditoria-cuentas") suspend fun auditoriaCuentas(): ApiResponse<AuditoriaCuentasData>
     @POST("api/auth/login") suspend fun login(@Body body: LoginRequest): ApiResponse<Session>
     @PATCH("api/auth/password")
     suspend fun cambiarPassword(@Body body: CambioPasswordRequest): ApiResponse<CambioPasswordResultado>
@@ -44,7 +49,9 @@ interface CooperativaApi {
     @GET("api/productos/compras/mias") suspend fun misCompras():ApiResponse<ComprasData>
     @POST("api/prestamos") suspend fun solicitarPrestamo(@Body body: PrestamoRequest): ApiResponse<PrestamoCreado>
     @GET("api/estudiantes/{id}/prestamos") suspend fun prestamosDe(@Path("id") id: String): ApiResponse<PrestamosData>
+    @GET("api/prestamos") suspend fun prestamosAdmin(): ApiResponse<PrestamosAdminData>
     @POST("api/prestamos/{id}/aprobar") suspend fun aprobarPrestamo(@Path("id") id: String): ApiResponse<DesembolsoResultado>
+    @POST("api/prestamos/{id}/rechazar") suspend fun rechazarPrestamo(@Path("id") id: String, @Body body: Map<String, String>): ApiResponse<Map<String, String>>
     @POST("api/prestamos/{id}/cuotas/{numero}/pagar") suspend fun pagarCuota(@Path("id") id: String,@Path("numero") numero:Int): ApiResponse<CuotaResultado>
     @GET("api/prestamos/{id}/pagos") suspend fun pagos(@Path("id") id: String): ApiResponse<PagosData>
 

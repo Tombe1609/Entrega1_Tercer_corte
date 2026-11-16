@@ -46,6 +46,8 @@ import com.cooperativa.app.ui.screens.TiendaScreen
 import com.cooperativa.app.ui.screens.TransferirScreen
 import com.cooperativa.app.ui.screens.GestionCatalogoScreen
 import com.cooperativa.app.ui.screens.MisComprasScreen
+import com.cooperativa.app.ui.screens.SolicitudesCuentaScreen
+import com.cooperativa.app.ui.screens.AuditoriaCuentasScreen
 import com.cooperativa.app.ui.theme.CooperativaTheme
 
 private val TABS = listOf(
@@ -146,6 +148,14 @@ private fun CooperativaAppContent(vm: MainViewModel) {
             composable("a_intereses") { AdminInteresesScreen(vm, nav) }
             composable("a_movimientos") { AdminMovimientosAhorroScreen(vm, nav, null) }
             composable("a_distribuir") { DistribuirInteresesScreen(vm, nav) }
+            composable("a_solicitudes") {
+                if (vm.session.value?.rol == "rector" || vm.session.value?.area == "solicitudes") SolicitudesCuentaScreen(vm, nav)
+                else androidx.compose.material3.Text("Acceso restringido")
+            }
+            composable("a_auditoria") {
+                if (vm.session.value?.rol == "rector" || vm.session.value?.area == "finanzas") AuditoriaCuentasScreen(vm, nav)
+                else androidx.compose.material3.Text("Acceso restringido")
+            }
         }
     }
 }

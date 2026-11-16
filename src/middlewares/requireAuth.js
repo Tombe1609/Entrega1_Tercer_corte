@@ -15,11 +15,11 @@ module.exports = asyncHandler(async (req, res, next) => {
   const esFuncionario = sesion.rol === 'funcionario';
   const cuenta = await coleccion(esFuncionario ? 'funcionarios' : 'usuarios').findOne(
     esFuncionario ? { funcionario_id: sesion.id } : { usuario_id: sesion.id, tipo: sesion.rol },
-    { projection: { _id: 0, estado: 1, version_sesion: 1 } },
+    { projection: { _id: 0, estado: 1, version_sesion: 1, area: 1 } },
   );
   if (!cuenta || String(cuenta.estado || '').toLowerCase() !== 'activo' ||
       (sesion.version_sesion ?? 0) !== (cuenta.version_sesion ?? 0)) throw errorSesion();
 
-  req.auth = sesion;
+  req.auth = { ...sesion, area: esFuncionario ? cuenta.area : null };
   return next();
 });

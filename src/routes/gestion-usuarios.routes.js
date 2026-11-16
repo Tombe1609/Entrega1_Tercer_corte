@@ -11,6 +11,7 @@ const CARGOS = [
   'Director financiero', 'Asesor de créditos', 'Tesorero',
   'Auxiliar administrativo', 'Analista financiero', 'Coordinador de cartera',
 ];
+const AREAS = ['solicitudes', 'finanzas', 'creditos'];
 function hashPassword(password) {
   const salt = randomBytes(16).toString('hex');
   return `${salt}:${scryptSync(password, salt, 64).toString('hex')}`;
@@ -26,14 +27,17 @@ router.post('/', requireRector, asyncHandler(async (req, res) => {
   const password = typeof body.password === 'string' ? body.password : '';
   const documento = texto(body.documento);
   const cargo = texto(body.cargo);
+  const area = texto(body.area).toLowerCase();
 
   if (!['estudiante', 'funcionario'].includes(tipo)) throw new AppError(400, 'El tipo debe ser estudiante o funcionario.');
   if (nombre.length < 3 || nombre.length > 100) throw new AppError(400, 'El nombre debe tener entre 3 y 100 caracteres.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AppError(400, 'Escribe un correo electrónico válido.');
+  if (tipo === 'estudiante' && !/@uniautonoma\.edu\.co$/.test(email)) throw new AppError(400, 'Los estudiantes deben usar su correo @uniautonoma.edu.co.');
   if (telefono && !/^\d{7,15}$/.test(telefono)) throw new AppError(400, 'El teléfono debe tener entre 7 y 15 dígitos.');
   if (password.length < 8 || password.length > 128) throw new AppError(400, 'La contraseña debe tener entre 8 y 128 caracteres.');
   if (tipo === 'estudiante' && !/^\d{5,15}$/.test(documento)) throw new AppError(400, 'El documento del estudiante debe tener entre 5 y 15 dígitos.');
   if (tipo === 'funcionario' && !CARGOS.includes(cargo)) throw new AppError(400, 'Selecciona un cargo válido.');
+  if (tipo === 'funcionario' && !AREAS.includes(area)) throw new AppError(400, 'Selecciona un área válida para el funcionario.');
 
   const usuarios = coleccion('usuarios');
   const funcionarios = coleccion('funcionarios');
@@ -63,12 +67,12 @@ router.post('/', requireRector, asyncHandler(async (req, res) => {
 
   const creadoFuncionario = await conReintentoDeId('funcionario_id', async () => {
     const [funcionario_id] = await siguientesIds(funcionarios, 'funcionario_id', 'F');
-    const persona = { funcionario_id, nombre, cargo, telefono, email, estado: 'activo', password_hash };
+    const persona = { funcionario_id, nombre, cargo, telefono, email, area, estado: 'activo', password_hash };
     await funcionarios.insertOne(persona);
     return persona;
   });
   return creado(res, {
-    tipo, id: creadoFuncionario.funcionario_id, nombre, email, cargo, estado: 'activo',
+    tipo, id: creadoFuncionario.funcionario_id, nombre, email, cargo, area, estado: 'activo',
   }, 'Cuenta de funcionario creada correctamente.');
 }));
 

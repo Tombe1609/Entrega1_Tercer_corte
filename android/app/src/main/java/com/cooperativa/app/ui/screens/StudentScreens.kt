@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -643,6 +645,14 @@ fun MovimientosScreen(vm: MainViewModel, nav: NavController) {
 @Composable
 fun PerfilScreen(vm: MainViewModel, onCambiarPassword: () -> Unit, onLogout: () -> Unit) {
     val s by vm.session.collectAsState()
+    val busy by vm.busy.collectAsState()
+    val error by vm.formError.collectAsState()
+    var editar by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var passwordActual by remember { mutableStateOf("") }
+    LaunchedEffect(s?.id) { nombre = s?.nombre.orEmpty(); telefono = s?.telefono.orEmpty(); email = s?.email.orEmpty() }
     ScreenScaffold("Mi perfil", "Socio ${if (s?.esAdmin == true) "administrador" else "estudiante"}") {
         AppCard {
             RowLine("Nombre completo", s?.nombre.orEmpty())
@@ -660,7 +670,7 @@ fun PerfilScreen(vm: MainViewModel, onCambiarPassword: () -> Unit, onLogout: () 
                 StatusChip((s?.estado ?: "activo").replaceFirstChar { it.uppercase() })
             }
         }
-        PrimaryButton("Editar información") { vm.avisar("Editar información aún no está disponible en la API.") }
+        PrimaryButton("Editar información") { vm.limpiarError(); passwordActual = ""; editar = true }
         SecondaryButton("Cambiar contraseña", onClick = onCambiarPassword)
         Text(
             "Cerrar sesión", color = RedText, fontWeight = FontWeight.Bold, fontSize = 17.sp,
@@ -668,4 +678,19 @@ fun PerfilScreen(vm: MainViewModel, onCambiarPassword: () -> Unit, onLogout: () 
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
     }
+    if (editar) AlertDialog(
+        onDismissRequest = { if (!busy) editar = false },
+        title = { Text("Actualizar datos personales") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppTextField("Nombre completo", nombre, { nombre = it })
+                AppTextField("Teléfono", telefono, { telefono = it }, keyboard = androidx.compose.ui.text.input.KeyboardType.Phone)
+                AppTextField("Correo institucional", email, { email = it }, keyboard = androidx.compose.ui.text.input.KeyboardType.Email)
+                if (email.trim() != s?.email) AppTextField("Confirma tu contraseña", passwordActual, { passwordActual = it }, password = true)
+                ErrorText(error)
+            }
+        },
+        confirmButton = { TextButton(enabled = !busy, onClick = { vm.editarPerfil(nombre, telefono, email, passwordActual) { editar = false } }) { Text(if (busy) "Guardando…" else "Guardar") } },
+        dismissButton = { TextButton(enabled = !busy, onClick = { editar = false }) { Text("Cancelar") } },
+    )
 }

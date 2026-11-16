@@ -42,6 +42,13 @@ class Repository(private val client: ApiClient) {
     }
 
     suspend fun login(email: String, password: String) = call { api.login(LoginRequest(email.trim(), password)) }
+    suspend fun solicitarCuenta(body: SolicitudCuentaRequest) = call { api.solicitarCuenta(body) }
+    suspend fun solicitudesCuenta() = call { api.solicitudesCuenta() }.solicitudes
+    suspend fun decidirSolicitud(id: String, aprobar: Boolean, motivo: String = "") = call {
+        api.decidirSolicitudCuenta(id, DecisionSolicitudRequest(if (aprobar) "aprobada" else "rechazada", motivo))
+    }
+    suspend fun editarPerfil(body: PerfilRequest) = call { api.editarPerfil(body) }
+    suspend fun auditoriaCuentas() = call { api.auditoriaCuentas() }.eventos
     suspend fun cambiarPassword(actual: String, nueva: String) {
         val resultado = call { api.cambiarPassword(CambioPasswordRequest(actual, nueva)) }
         if (!resultado.actualizada) throw ApiException("No se confirmó el cambio de contraseña.")
@@ -69,7 +76,9 @@ class Repository(private val client: ApiClient) {
     suspend fun solicitarPrestamo(usuarioId: String, finId: String?, monto: Double,plazoMeses:Int,fechaPrimerPago:String,productoId:String?=null) =
         call { api.solicitarPrestamo(PrestamoRequest(usuarioId, finId, monto,plazoMeses,fechaPrimerPago,productoId)) }
     suspend fun prestamosDe(usuarioId: String) = call { api.prestamosDe(usuarioId) }
+    suspend fun prestamosAdmin() = call { api.prestamosAdmin() }.prestamos
     suspend fun aprobarPrestamo(prestamoId: String) = call { api.aprobarPrestamo(prestamoId) }
+    suspend fun rechazarPrestamo(prestamoId: String, motivo: String) = call { api.rechazarPrestamo(prestamoId, mapOf("motivo" to motivo)) }
     suspend fun pagarCuota(prestamoId:String,numero:Int)=call{api.pagarCuota(prestamoId,numero)}
     suspend fun pagos(prestamoId: String) = call { api.pagos(prestamoId) }.pagos
 

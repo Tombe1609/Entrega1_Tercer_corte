@@ -351,4 +351,23 @@ async function historialPagos(prestamo_id) {
   };
 }
 
-module.exports = { listarFines, obtenerPrestamo, solicitar, aprobar, calcularInteres, consultarDeEstudiante, pagarCuota, historialPagos };
+async function listarAdministracion() {
+  const prestamos = await coleccion('prestamos').find({}, SIN_ID).sort({ fecha_solicitud: -1 }).limit(200).toArray();
+  const ids = [...new Set(prestamos.map(p => p.usuario_id))];
+  const estudiantes = await coleccion('usuarios').find({ usuario_id: { $in: ids } }, {
+    projection: { _id: 0, usuario_id: 1, nombre: 1 },
+  }).toArray();
+  const nombres = new Map(estudiantes.map(u => [u.usuario_id, u.nombre]));
+  return prestamos.map(p => ({ usuario_id: p.usuario_id, nombre: nombres.get(p.usuario_id) || p.usuario_id, prestamo: p }));
+}
+
+async function rechazar(prestamo_id, actor, motivo) {
+  if (!motivo || motivo.length > 250) throw new AppError(400, 'Indica el motivo del rechazo, hasta 250 caracteres.');
+  const resultado = await coleccion('prestamos').updateOne({ prestamo_id, estado: 'pendiente' }, {
+    $set: { estado: 'rechazado', rechazado_por: actor, fecha_rechazo: new Date(), motivo_rechazo: motivo },
+  });
+  if (resultado.matchedCount !== 1) throw new AppError(409, 'El préstamo ya se atendió o no existe.');
+  return { estado: 'rechazado' };
+}
+
+module.exports = { listarFines, obtenerPrestamo, solicitar, aprobar, calcularInteres, consultarDeEstudiante, pagarCuota, historialPagos, listarAdministracion, rechazar };

@@ -21,6 +21,10 @@ import com.cooperativa.app.data.Producto
 import com.cooperativa.app.data.Compra
 import com.cooperativa.app.data.Repository
 import com.cooperativa.app.data.Session
+import com.cooperativa.app.data.SolicitudCuenta
+import com.cooperativa.app.data.SolicitudCuentaRequest
+import com.cooperativa.app.data.PerfilRequest
+import com.cooperativa.app.data.AuditoriaCuenta
 import com.cooperativa.app.data.Usuario
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
@@ -50,17 +54,19 @@ data class PrestamoAdmin(val usuarioId: String, val nombre: String, val prestamo
 
 /** Todo lo que necesita el panel administrativo. */
 data class AdminData(
-    val stats: Estadisticas,
-    val estudiantes: List<Usuario>,
-    val funcionarios: List<Funcionario>,
-    val cuentas: List<Ahorro>,
-    val movimientos: List<Movimiento>,
-    val prestamos: List<PrestamoAdmin>,
-    val pagos: List<Pago>,
-    val fines: List<FinEducativo>,
+    val stats: Estadisticas = Estadisticas(),
+    val estudiantes: List<Usuario> = emptyList(),
+    val funcionarios: List<Funcionario> = emptyList(),
+    val cuentas: List<Ahorro> = emptyList(),
+    val movimientos: List<Movimiento> = emptyList(),
+    val prestamos: List<PrestamoAdmin> = emptyList(),
+    val pagos: List<Pago> = emptyList(),
+    val fines: List<FinEducativo> = emptyList(),
     val productos: List<Producto> = emptyList(),
 ) {
-    fun nombreDe(usuarioId: String) = estudiantes.firstOrNull { it.usuarioId == usuarioId }?.nombre ?: usuarioId
+    fun nombreDe(usuarioId: String) = estudiantes.firstOrNull { it.usuarioId == usuarioId }?.nombre
+        ?: prestamos.firstOrNull { it.usuarioId == usuarioId }?.nombre
+        ?: usuarioId
 }
 
 /** Fila unificada del historial (ahorros + préstamos + pagos). */
@@ -197,6 +203,47 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun solicitarCuenta(nombre: String, documento: String, telefono: String, email: String, password: String) =
+        act("Solicitud enviada. Miguel la revisará antes de crear la cuenta.") {
+            repo.solicitarCuenta(SolicitudCuentaRequest(nombre.trim(), documento.trim(), telefono.trim(), email.trim(), password))
+        }
+
+    fun editarPerfil(nombre: String, telefono: String, email: String, passwordActual: String, onDone: () -> Unit) =
+        act("Tus datos personales quedaron actualizados.", onDone) {
+            val actual = _session.value ?: throw ApiException("No hay sesión iniciada.")
+            val resultado = repo.editarPerfil(PerfilRequest(nombre.trim(), telefono.trim(), email.trim(), passwordActual.takeIf { email.trim() != actual.email }))
+            guardarSesion(actual.copy(nombre = resultado.nombre, telefono = resultado.telefono, email = resultado.email))
+        }
+
+    private val _solicitudes = MutableStateFlow<UiState<List<SolicitudCuenta>>>(UiState.Loading)
+    val solicitudes: StateFlow<UiState<List<SolicitudCuenta>>> = _solicitudes.asStateFlow()
+    private val _auditoria = MutableStateFlow<UiState<List<AuditoriaCuenta>>>(UiState.Loading)
+    val auditoria: StateFlow<UiState<List<AuditoriaCuenta>>> = _auditoria.asStateFlow()
+
+    fun cargarAuditoria() {
+        viewModelScope.launch {
+            _auditoria.value = UiState.Loading
+            try { _auditoria.value = UiState.Success(repo.auditoriaCuentas()) }
+            catch (e: ApiException) { if (!expirarSesionSiCorresponde(e)) _auditoria.value = UiState.Error(e.message ?: "Error") }
+            catch (e: Exception) { _auditoria.value = UiState.Error("Ocurrió un error inesperado: ${e.message}") }
+        }
+    }
+
+    fun cargarSolicitudes() {
+        viewModelScope.launch {
+            _solicitudes.value = UiState.Loading
+            try { _solicitudes.value = UiState.Success(repo.solicitudesCuenta()) }
+            catch (e: ApiException) { if (!expirarSesionSiCorresponde(e)) _solicitudes.value = UiState.Error(e.message ?: "Error") }
+            catch (e: Exception) { _solicitudes.value = UiState.Error("Ocurrió un error inesperado: ${e.message}") }
+        }
+    }
+
+    fun decidirSolicitud(id: String, aprobar: Boolean, motivo: String = "", onDone: () -> Unit = {}) =
+        act(if (aprobar) "Solicitud aprobada y cuenta creada." else "Solicitud rechazada.", onDone) {
+            repo.decidirSolicitud(id, aprobar, motivo)
+            _solicitudes.value = UiState.Success(repo.solicitudesCuenta())
+        }
+
     fun logout() {
         guardarSesion(null)
         _student.value = UiState.Loading
@@ -291,31 +338,47 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val admin: StateFlow<UiState<AdminData>> = _admin.asStateFlow()
 
     private suspend fun fetchAdmin(): AdminData = coroutineScope {
+        val sesion = _session.value ?: throw ApiException("No hay sesión iniciada.")
+        if (sesion.rol == "funcionario" && sesion.area == "solicitudes") return@coroutineScope AdminData()
+        if (sesion.rol == "funcionario" && sesion.area == "creditos") {
+            val raw = repo.prestamosAdmin()
+            val prestamoAdmin = raw.map { PrestamoAdmin(it.usuarioId, it.nombre, it.prestamo) }
+            val pagos = prestamoAdmin.map { async { repo.pagos(it.prestamo.prestamoId) } }.flatMap { it.await() }
+            return@coroutineScope AdminData(
+                prestamos = prestamoAdmin, pagos = pagos, fines = repo.fines(), productos = repo.productos(),
+            )
+        }
+        if (sesion.rol == "rector") {
+            val stats = async { repo.estadisticas() }
+            val estudiantes = async { repo.estudiantes() }
+            val funcionarios = async { repo.funcionarios() }
+            val cuentas = async { repo.cuentas() }
+            val fines = async { repo.fines() }
+            val productos = async { repo.productos() }
+            val est = estudiantes.await()
+            val cts = cuentas.await()
+            val movs = cts.map { async { repo.movimientos(it.ahorroId) } }
+            val pres = est.map { u -> u to async { repo.prestamosDe(u.usuarioId) } }
+            val prestamos = pres.flatMap { (u, d) -> d.await().prestamos.map { PrestamoAdmin(u.usuarioId, u.nombre, it) } }
+            val pagos = prestamos.map { async { repo.pagos(it.prestamo.prestamoId) } }
+            return@coroutineScope AdminData(
+                stats = stats.await(), estudiantes = est, funcionarios = funcionarios.await(), cuentas = cts,
+                movimientos = movs.flatMap { it.await() }, prestamos = prestamos,
+                pagos = pagos.flatMap { it.await() }, fines = fines.await(), productos = productos.await(),
+            )
+        }
         val stats = async { repo.estadisticas() }
         val estudiantes = async { repo.estudiantes() }
-        val funcionarios = async { repo.funcionarios() }
         val cuentas = async { repo.cuentas() }
-        val fines = async { repo.fines() }
-        val productos = async { repo.productos() }
         val est = estudiantes.await()
         val cts = cuentas.await()
-
         val movs = cts.map { async { repo.movimientos(it.ahorroId) } }
-        val pres = est.map { u -> u to async { repo.prestamosDe(u.usuarioId) } }
-
-        val prestamos = pres.flatMap { (u, d) -> d.await().prestamos.map { PrestamoAdmin(u.usuarioId, u.nombre, it) } }
-        val pagos = prestamos.map { async { repo.pagos(it.prestamo.prestamoId) } }
-
+        val movimientos = movs.flatMap { it.await() }
         AdminData(
             stats = stats.await(),
             estudiantes = est,
-            funcionarios = funcionarios.await(),
             cuentas = cts,
-            movimientos = movs.flatMap { it.await() },
-            prestamos = prestamos,
-            pagos = pagos.flatMap { it.await() },
-            fines = fines.await(),
-            productos = productos.await(),
+            movimientos = movimientos,
         )
     }
 
@@ -337,7 +400,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Crea una persona y sus credenciales de acceso desde el módulo exclusivo del rector. */
     fun crearCuentaAcceso(
         tipo: String, nombre: String, documento: String, telefono: String,
-        email: String, cargo: String, password: String, onDone: () -> Unit,
+        email: String, cargo: String, password: String, area: String? = null, onDone: () -> Unit,
     ) = act("Cuenta de acceso creada correctamente", onDone) {
         val tipoApi = if (tipo == "Estudiante") "estudiante" else "funcionario"
         repo.crearCuentaAcceso(
@@ -349,6 +412,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 email = email.trim(),
                 cargo = cargo.takeIf { tipoApi == "funcionario" },
                 password = password,
+                area = area,
             )
         )
         _admin.value = UiState.Success(fetchAdmin())
@@ -364,6 +428,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun aprobarPrestamo(prestamoId: String, onDone: () -> Unit) =
         act("Préstamo aprobado y desembolsado; el saldo de ahorro fue actualizado.", onDone) {
             repo.aprobarPrestamo(prestamoId)
+            _admin.value = UiState.Success(fetchAdmin())
+        }
+
+    fun rechazarPrestamo(prestamoId: String, motivo: String, onDone: () -> Unit) =
+        act("Solicitud de préstamo rechazada.", onDone) {
+            if (motivo.isBlank() || motivo.length > 250) throw ApiException("Escribe un motivo de rechazo de hasta 250 caracteres.")
+            repo.rechazarPrestamo(prestamoId, motivo.trim())
             _admin.value = UiState.Success(fetchAdmin())
         }
 

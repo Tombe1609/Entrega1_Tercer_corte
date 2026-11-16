@@ -30,9 +30,36 @@ data class Session(
     val estado: String? = null,
     @SerializedName("ahorro_id") val ahorroId: String? = null,
     val token: String? = null,
+    val area: String? = null,
 ) {
     val esAdmin: Boolean get() = rol != "estudiante"
 }
+
+data class SolicitudCuentaRequest(
+    val nombre: String,
+    val documento: String,
+    val telefono: String,
+    val email: String,
+    val password: String,
+)
+data class SolicitudCuenta(
+    val id: String = "", val nombre: String = "", val documento: String = "",
+    val telefono: String = "", val email: String = "", val estado: String = "",
+    val fecha: String? = null, val motivo: String? = null,
+)
+data class SolicitudesCuentaData(val solicitudes: List<SolicitudCuenta> = emptyList())
+data class PrestamosAdminData(val prestamos: List<PrestamoAdminDto> = emptyList())
+data class PrestamoAdminDto(@SerializedName("usuario_id") val usuarioId: String = "", val nombre: String = "", val prestamo: PrestamoResumen = PrestamoResumen())
+data class DecisionSolicitudRequest(val estado: String, val motivo: String = "")
+data class AuditoriaCuenta(
+    val fecha: String? = null, @SerializedName("actor_id") val actorId: String = "",
+    @SerializedName("actor_rol") val actorRol: String = "", @SerializedName("usuario_id") val usuarioId: String = "",
+    val accion: String = "", val campos: List<String> = emptyList(), val cambios: List<CambioAuditado> = emptyList(),
+)
+data class CambioAuditado(val campo: String = "", val anterior: String? = null, val nuevo: String? = null)
+data class AuditoriaCuentasData(val eventos: List<AuditoriaCuenta> = emptyList())
+data class PerfilRequest(val nombre: String, val telefono: String, val email: String, @SerializedName("password_actual") val passwordActual: String? = null)
+data class PerfilResultado(val nombre: String = "", val telefono: String = "", val email: String = "")
 
 // ---------- Usuarios ----------
 data class Usuario(
@@ -54,6 +81,7 @@ data class Funcionario(
     val telefono: String = "",
     val email: String = "",
     val estado: String = "",
+    val area: String? = null,
 )
 
 data class FuncionariosData(val cantidad: Int = 0, val funcionarios: List<Funcionario> = emptyList())
@@ -66,6 +94,7 @@ data class CrearCuentaAccesoRequest(
     val email: String,
     val cargo: String? = null,
     val password: String,
+    val area: String? = null,
 )
 
 data class CuentaAccesoCreada(

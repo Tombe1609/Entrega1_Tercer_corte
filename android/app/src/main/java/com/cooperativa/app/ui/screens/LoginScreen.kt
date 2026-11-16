@@ -55,6 +55,10 @@ fun LoginScreen(vm: MainViewModel, onLogged: (Session) -> Unit) {
     val error by vm.formError.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var registrar by remember { mutableStateOf(false) }
+    var nombre by remember { mutableStateOf("") }
+    var documento by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
     var dialogo by remember { mutableStateOf(false) }
     var servidor by remember { mutableStateOf(vm.servidor) }
     var errorServidor by remember { mutableStateOf<String?>(null) }
@@ -80,23 +84,43 @@ fun LoginScreen(vm: MainViewModel, onLogged: (Session) -> Unit) {
             Spacer(Modifier.height(28.dp))
 
             AppCard {
-                AppTextField("Correo electrónico", email, { email = it }, keyboard = KeyboardType.Email, placeholder = "usuario@universidad.edu.co")
-                Spacer(Modifier.height(14.dp))
-                AppTextField("Contraseña", password, { password = it }, password = true)
-                Spacer(Modifier.height(16.dp))
-                ErrorText(error)
-                if (error != null) Spacer(Modifier.height(12.dp))
-                PrimaryButton("Iniciar sesión", loading = busy) { vm.login(email, password, onLogged) }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "¿Olvidaste tu contraseña?", color = Teal, fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth().clickable { vm.avisar("Comunícate con la cooperativa para recuperar tu contraseña.") }.padding(8.dp),
-                    textAlign = TextAlign.Center,
-                )
+                if (registrar) {
+                    Text("Solicita tu cuenta", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(12.dp))
+                    AppTextField("Nombre completo", nombre, { nombre = it })
+                    Spacer(Modifier.height(10.dp))
+                    AppTextField("Documento", documento, { documento = it }, keyboard = KeyboardType.Number)
+                    Spacer(Modifier.height(10.dp))
+                    AppTextField("Teléfono", telefono, { telefono = it }, keyboard = KeyboardType.Phone)
+                    Spacer(Modifier.height(10.dp))
+                    AppTextField("Correo institucional", email, { email = it }, keyboard = KeyboardType.Email, placeholder = "usuario@uniautonoma.edu.co")
+                    Spacer(Modifier.height(10.dp))
+                    AppTextField("Contraseña", password, { password = it }, password = true)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Solo aceptamos correos @uniautonoma.edu.co. Miguel revisará la solicitud antes de activar la cuenta.", color = Muted, fontSize = 13.sp)
+                    Spacer(Modifier.height(12.dp))
+                    ErrorText(error)
+                    Spacer(Modifier.height(10.dp))
+                    PrimaryButton("Enviar solicitud", loading = busy) { vm.solicitarCuenta(nombre, documento, telefono, email, password) }
+                    Text("Volver al inicio de sesión", color = Teal, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth().clickable { registrar = false; vm.limpiarError() }.padding(12.dp), textAlign = TextAlign.Center)
+                } else {
+                    AppTextField("Correo electrónico", email, { email = it }, keyboard = KeyboardType.Email, placeholder = "usuario@uniautonoma.edu.co")
+                    Spacer(Modifier.height(14.dp))
+                    AppTextField("Contraseña", password, { password = it }, password = true)
+                    Spacer(Modifier.height(16.dp))
+                    ErrorText(error)
+                    if (error != null) Spacer(Modifier.height(12.dp))
+                    PrimaryButton("Iniciar sesión", loading = busy) { vm.login(email, password, onLogged) }
+                    Spacer(Modifier.height(12.dp))
+                    Text("¿Olvidaste tu contraseña?", color = Teal, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth().clickable { vm.avisar("Comunícate con la cooperativa para recuperar tu contraseña.") }.padding(8.dp), textAlign = TextAlign.Center)
+                    Text("Solicitar una cuenta", color = Teal, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth().clickable { registrar = true; vm.limpiarError() }.padding(8.dp), textAlign = TextAlign.Center)
+                }
             }
             Spacer(Modifier.height(20.dp))
             Text(
-                "¿Aún no eres socio? Comunícate con un funcionario para crear tu cuenta.",
+                if (registrar) "La cuenta solo se activa cuando el área de solicitudes aprueba tus datos." else "¿Aún no eres socio? Puedes enviar una solicitud de cuenta.",
                 color = Muted, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
             )
             if (BuildConfig.DEBUG) {

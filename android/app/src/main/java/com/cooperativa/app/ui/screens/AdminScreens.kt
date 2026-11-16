@@ -73,13 +73,17 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
     LaunchedEffect(Unit) { vm.cargarAdmin() }
 
     val esRector = session?.rol == "rector"
+    val area = session?.area
+    val esFinanzas = esRector || area == "finanzas"
+    val esCreditos = esRector || area == "creditos"
+    val esSolicitudes = esRector || area == "solicitudes"
     val nombre = session?.nombre?.trim()?.takeIf { it.isNotEmpty() }?.split(" ")?.firstOrNull() ?: "bienvenido"
     ScreenScaffold(
         title = "Hola, $nombre",
         subtitle = if (esRector) "Panel del rector · Control general" else "Panel del funcionario · Gestión diaria",
     ) {
         Text(if (esRector) "COOPERATIVA · DIRECCIÓN" else "COOPERATIVA · OPERACIONES", color = Color.White.copy(alpha = 0.78f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        StateContent(st, onRetry = { vm.cargarAdmin() }) { d ->
+        if (esFinanzas) StateContent(st, onRetry = { vm.cargarAdmin() }) { d ->
             val s = d.stats
             val activos = s.prestamos?.porEstado?.firstOrNull { it.estado == "activo" }?.cantidad ?: 0
             val pendientes = s.prestamos?.porEstado?.firstOrNull { it.estado == "pendiente" }?.cantidad ?: 0
@@ -103,18 +107,26 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
         Text("Accesos rápidos", color = Ink, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
         Text("Selecciona un módulo para continuar", color = Muted, fontSize = 13.sp)
         val tiles = buildList {
-            add("Usuarios" to "a_usuarios")
-            add("Funcionarios" to "a_funcionarios")
-            if (session?.rol == "rector") add("Cuentas de acceso" to "a_cuentas_acceso")
-            add("Ahorros" to "a_ahorros")
-            add("Depósitos" to "a_depositos")
-            add("Retiros" to "a_retiros")
-            add("Préstamos" to "a_prestamos")
-            add("Catálogo" to "a_catalogo")
-            add("Pagos" to "a_pagos")
-            add("Intereses" to "a_intereses")
-            add("Movimientos" to "a_movimientos")
-            if (session?.rol == "rector") add("Distribuir intereses" to "a_distribuir")
+            if (esFinanzas) {
+                add("Usuarios y datos" to "a_usuarios")
+                add("Ahorros" to "a_ahorros")
+                add("Depósitos" to "a_depositos")
+                add("Retiros" to "a_retiros")
+                add("Movimientos de dinero" to "a_movimientos")
+                add("Auditoría de datos" to "a_auditoria")
+            }
+            if (esRector) {
+                add("Funcionarios" to "a_funcionarios")
+                add("Cuentas de acceso" to "a_cuentas_acceso")
+                add("Distribuir intereses" to "a_distribuir")
+            }
+            if (esCreditos) {
+                add("Préstamos" to "a_prestamos")
+                add("Catálogo" to "a_catalogo")
+                add("Pagos" to "a_pagos")
+                add("Intereses" to "a_intereses")
+            }
+            if (esSolicitudes) add("Solicitudes de cuenta" to "a_solicitudes")
         }
         tiles.chunked(2).forEachIndexed { fila, par ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -125,6 +137,58 @@ fun AdminPanelScreen(vm: MainViewModel, nav: NavController, onLogout: () -> Unit
         }
         SecondaryButton("Cambiar contraseña") { nav.navigate("cambiarPassword") }
         SecondaryButton("Cerrar sesión", color = RedText) { onLogout() }
+    }
+}
+
+@Composable
+fun SolicitudesCuentaScreen(vm: MainViewModel, nav: NavController) {
+    val solicitudes by vm.solicitudes.collectAsState()
+    val busy by vm.busy.collectAsState()
+    var rechazo by remember { mutableStateOf<com.cooperativa.app.data.SolicitudCuenta?>(null) }
+    var motivo by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { vm.cargarSolicitudes() }
+    ScreenScaffold("Solicitudes de cuenta", "Miguel revisa y decide cada solicitud", onBack = { nav.popBackStack() }) {
+        StateContent(solicitudes, onRetry = { vm.cargarSolicitudes() }) { lista ->
+            if (lista.isEmpty()) InfoBox { Text("No hay solicitudes pendientes.", color = Muted) }
+            lista.forEach { s ->
+                AppCard {
+                    Text(s.nombre, color = Ink, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text("Documento: ${s.documento}", color = Muted)
+                    Text("Correo: ${s.email}", color = Muted)
+                    Text("Teléfono: ${s.telefono}", color = Muted)
+                    Text("Recibida: ${Fmt.fechaHora(s.fecha)}", color = Muted, fontSize = 12.sp)
+                    PrimaryButton("Aprobar", loading = busy) { vm.decidirSolicitud(s.id, true) { vm.cargarSolicitudes() } }
+                    SecondaryButton("Rechazar") { rechazo = s; motivo = "" }
+                }
+            }
+        }
+    }
+    rechazo?.let { s -> AlertDialog(
+        onDismissRequest = { if (!busy) rechazo = null },
+        title = { Text("Rechazar solicitud") },
+        text = { Column { Text("Solicitud de ${s.nombre}"); AppTextField("Motivo del rechazo", motivo, { motivo = it }); ErrorText(vm.formError.collectAsState().value) } },
+        confirmButton = { TextButton(enabled = !busy && motivo.isNotBlank(), onClick = { vm.decidirSolicitud(s.id, false, motivo) { rechazo = null; vm.cargarSolicitudes() } }) { Text("Confirmar rechazo") } },
+        dismissButton = { TextButton(onClick = { rechazo = null }) { Text("Cancelar") } },
+    ) }
+}
+
+@Composable
+fun AuditoriaCuentasScreen(vm: MainViewModel, nav: NavController) {
+    val auditoria by vm.auditoria.collectAsState()
+    LaunchedEffect(Unit) { vm.cargarAuditoria() }
+    ScreenScaffold("Auditoría de datos", "Cambios de correo, teléfono y contraseña", onBack = { nav.popBackStack() }) {
+        StateContent(auditoria, onRetry = { vm.cargarAuditoria() }) { eventos ->
+            if (eventos.isEmpty()) InfoBox { Text("Todavía no hay cambios personales registrados.", color = Muted) }
+            eventos.forEach { evento -> AppCard {
+                Text("${evento.accion.replace('_', ' ').replaceFirstChar { it.uppercase() }} · ${evento.usuarioId}", color = Ink, fontWeight = FontWeight.Bold)
+                Text("${Fmt.fechaHora(evento.fecha)} · Actor ${evento.actorId} (${evento.actorRol})", color = Muted, fontSize = 12.sp)
+                evento.cambios.forEach { c ->
+                    val valores = if (c.campo == "password") "valor protegido" else "${c.anterior ?: "—"} → ${c.nuevo ?: "—"}"
+                    Text("${c.campo}: $valores", color = Muted)
+                }
+            } }
+        }
+        InfoBox { Text("Las contraseñas nunca se muestran ni se guardan en texto legible. Los movimientos de dinero se consultan en su módulo separado.", color = Muted) }
     }
 }
 
@@ -164,7 +228,7 @@ fun AdminUsuariosScreen(vm: MainViewModel, nav: NavController) {
                         RowLine("ID", u.usuarioId)
                         RowLine("Saldo de ahorro", saldo?.let { Fmt.money(it) } ?: "Sin cuenta")
                         val pres = d.prestamos.filter { it.prestamo.prestamoId.isNotBlank() && it.usuarioId == u.usuarioId }
-                        RowLine("Préstamos", "${pres.size}")
+                        if (d.prestamos.isNotEmpty()) RowLine("Préstamos", "${pres.size}")
                     }
                 }
             }
@@ -216,6 +280,8 @@ fun GestionCuentasAccesoScreen(vm: MainViewModel, nav: NavController) {
     var telefono by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var cargo by remember { mutableStateOf(CARGOS[0]) }
+    val areas = listOf("solicitudes", "finanzas", "creditos")
+    var area by remember { mutableStateOf(areas[0]) }
     var password by remember { mutableStateOf("") }
     val tipos = listOf("Estudiante", "Funcionario")
 
@@ -231,6 +297,7 @@ fun GestionCuentasAccesoScreen(vm: MainViewModel, nav: NavController) {
                 AppTextField("Documento", documento, { documento = it.filter(Char::isDigit) }, keyboard = KeyboardType.Number)
             } else {
                 DropdownField("Cargo", cargo, CARGOS, { cargo = CARGOS[it] })
+                DropdownField("Área y permisos", area.replaceFirstChar { it.uppercase() }, areas.map { it.replaceFirstChar(Char::uppercase) }, { area = areas[it] })
             }
             AppTextField("Teléfono", telefono, { telefono = it.filter(Char::isDigit) }, keyboard = KeyboardType.Phone)
             AppTextField("Correo electrónico", correo, { correo = it }, keyboard = KeyboardType.Email)
@@ -247,7 +314,7 @@ fun GestionCuentasAccesoScreen(vm: MainViewModel, nav: NavController) {
                 nombre.isBlank() || correo.isBlank() || telefono.isBlank() || password.isBlank() -> vm.avisar("Completa los campos obligatorios.")
                 tipo == "Estudiante" && documento.isBlank() -> vm.avisar("Escribe el documento del estudiante.")
                 password.length < 8 -> vm.avisar("La contraseña debe tener mínimo 8 caracteres.")
-                else -> vm.crearCuentaAcceso(tipo, nombre, documento, telefono, correo, cargo, password) {
+                else -> vm.crearCuentaAcceso(tipo, nombre, documento, telefono, correo, cargo, password, area) {
                     nav.popBackStack()
                 }
             }
@@ -343,6 +410,8 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
     val busy by vm.busy.collectAsState()
     val error by vm.formError.collectAsState()
     var solicitudAprobar by remember { mutableStateOf<PrestamoAdmin?>(null) }
+    var solicitudRechazar by remember { mutableStateOf<PrestamoAdmin?>(null) }
+    var motivoRechazo by remember { mutableStateOf("") }
     LaunchedEffect(Unit) { vm.cargarAdmin() }
     ScreenScaffold("Préstamos", "Préstamos educativos al 5% de interés", onBack = { nav.popBackStack() }) {
         StateContent(st, onRetry = { vm.cargarAdmin() }) { d ->
@@ -371,6 +440,7 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
                             vm.limpiarError()
                             solicitudAprobar = pa
                         }
+                        SecondaryButton("Rechazar solicitud") { vm.limpiarError(); motivoRechazo = ""; solicitudRechazar = pa }
                     } else {
                         LabelValue("Interés pendiente", Fmt.money(p.interesPendiente))
                         p.fechaDesembolso?.let { Text("Desembolsado: ${Fmt.fechaLarga(it)}", color = Muted, fontSize = 13.sp) }
@@ -406,6 +476,23 @@ fun AdminPrestamosScreen(vm: MainViewModel, nav: NavController) {
                 },
             )
         }
+        solicitudRechazar?.let { solicitud ->
+            AlertDialog(
+                onDismissRequest = { if (!busy) solicitudRechazar = null },
+                title = { Text("Rechazar solicitud") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Indica el motivo para ${solicitud.nombre} · ${solicitud.prestamo.prestamoId}.")
+                        AppTextField("Motivo (máximo 250 caracteres)", motivoRechazo, { motivoRechazo = it.take(250) })
+                        ErrorText(error)
+                    }
+                },
+                confirmButton = { TextButton(enabled = !busy && motivoRechazo.isNotBlank(), onClick = {
+                    vm.rechazarPrestamo(solicitud.prestamo.prestamoId, motivoRechazo) { solicitudRechazar = null }
+                }) { Text(if (busy) "Procesando…" else "Confirmar rechazo") } },
+                dismissButton = { TextButton(enabled = !busy, onClick = { solicitudRechazar = null }) { Text("Cancelar") } },
+            )
+        }
     }
 }
 
@@ -439,7 +526,7 @@ fun AdminInteresesScreen(vm: MainViewModel, nav: NavController) {
     LaunchedEffect(Unit) { vm.cargarAdmin() }
     ScreenScaffold("Intereses", "Intereses pendientes por préstamo activo", onBack = { nav.popBackStack() }) {
         StateContent(st, onRetry = { vm.cargarAdmin() }) { d ->
-            InfoBox { RowLine("Total pendiente", Fmt.money(d.stats.prestamos?.totalInteresesPendientes ?: 0.0)) }
+            InfoBox { RowLine("Total pendiente", Fmt.money(d.prestamos.filter { it.prestamo.estado == "activo" }.sumOf { it.prestamo.interesPendiente })) }
             AppCard {
                 val activos = d.prestamos.filter { it.prestamo.estado == "activo" }
                 if (activos.isEmpty()) Text("No hay préstamos activos.", color = Muted)
